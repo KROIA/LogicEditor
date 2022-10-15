@@ -1,0 +1,3 @@
+[submodule "extern/Qt-Ribbon-Widget"]
+	path = extern/Qt-Ribbon-Widget
+	url = https://github.com/KROIA/Qt-Ribbon-Widget
