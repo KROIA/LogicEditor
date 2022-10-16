@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/connection_connect.png</file>
+        <file>icons/connection_disconnect.png</file>
+        <file>icons/Gates/AndGate.png</file>
+        <file>icons/Gates/OrGate.png</file>
+        <file>icons/Gates/XorGate.png</file>
+        <file>icons/Gates/NotGate.png</file>
+        <file>icons/Gates/InGate.png</file>
+        <file>icons/Gates/Clock.png</file>
+        <file>icons/delete.png</file>
+    </qresource>
+</RCC>

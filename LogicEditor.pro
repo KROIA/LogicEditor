@@ -15,17 +15,52 @@ inc = inc
 src = src
 ui  = ui
 
-INCLUDEPATH += $$inc
+
+INCLUDEPATH += $$inc \
+               $$inc/logicGate \
+               $$inc/logicGate/gates \
+               $$inc/connection \
+               $$inc/ui
 
 HEADERS += \
-    $$inc/mainwindow.h
+    $$inc/ui/mainwindow.h \
+    $$inc/ui/EditorRibbon.h \
+    $$inc/logicGate/Pin.h \
+    $$inc/logicGate/Gate.h \
+    $$inc/logicGate/gates/AndGate.h \
+    $$inc/connection/Connection.h \
+    $$inc/LogicSignal.h \
+    inc/EditingTool.h \
+    inc/logicGate/LogicGates.h \
+    inc/logicGate/gates/Clock.h \
+    inc/logicGate/gates/InputGate.h \
+    inc/logicGate/gates/NotGate.h \
+    inc/logicGate/gates/OrGate.h \
+    inc/logicGate/gates/XorGate.h
+
 
 SOURCES += \
     $$src/main.cpp \
-    $$src/mainwindow.cpp
+    $$src/ui/mainwindow.cpp \
+    $$src/ui/EditorRibbon.cpp \
+    $$src/logicGate/Pin.cpp \
+    $$src/logicGate/Gate.cpp \
+    $$src/logicGate/gates/AndGate.cpp \
+    $$src/connection/Connection.cpp \
+    $$src/LogicSignal.cpp \
+    src/EditingTool.cpp \
+    src/logicGate/gates/Clock.cpp \
+    src/logicGate/gates/InputGate.cpp \
+    src/logicGate/gates/NotGate.cpp \
+    src/logicGate/gates/OrGate.cpp \
+    src/logicGate/gates/XorGate.cpp
+
 
 FORMS += \
     $$ui/mainwindow.ui
+
+RESOURCES += \
+    $$PWD/resources.qrc
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
