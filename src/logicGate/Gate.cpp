@@ -156,7 +156,7 @@ void Gate::setInputCount(size_t inputs)
 {
     for(size_t i=0; i<m_inputs.size(); ++i)
     {
-        ISerializable::removeChild(m_outputs[i]);
+        ISerializable::removeChild(m_inputs[i]);
         deleteChild(m_inputs[i]);
     }
     m_inputs.clear();
