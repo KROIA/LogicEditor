@@ -1,10 +1,12 @@
 #include "Pin.h"
 #include "Connection.h"
+#include "Gate.h"
 
 //bool Pin::m_connectorToolActive = false;
 Pin::Pin(const std::string &name,
          CanvasObject *parent)
     : CanvasObject(name, parent)
+    , ISerializable()
 {
     m_size = sf::Vector2f(15,4);
     m_value = new LogicSignal(LogicSignal::Digital::low);
@@ -12,6 +14,7 @@ Pin::Pin(const std::string &name,
     m_type = Type::input;
     m_orientation = Orientation::left;
     m_isInverted = false;
+    m_pinNr = 0;
 
     m_painter = new PinPainter("PinPainter");
     m_painter->m_pin = this;
@@ -28,10 +31,39 @@ Pin::Pin(const std::string &name,
     addComponent(m_button);
     addComponent(m_inverterButton);
 
-    setPosition(sf::Vector2f(0,0));
+
 
     m_inputConnection = nullptr;
 }
+Pin::Pin(const Pin &other)
+    : CanvasObject(other)
+{
+    m_type = other.m_type;
+    m_orientation = other.m_orientation;
+    m_value = new LogicSignal(other.m_value->getValue());
+    m_originalValue = m_value;
+    m_size = other.m_size;
+    m_isInverted = other.m_isInverted;
+    m_pinNr = other.m_pinNr;
+
+    m_painter = new PinPainter(*other.m_painter);
+    m_painter->m_pin = this;
+
+    m_button = new QSFML::Components::Button(*other.m_button);
+    connect(m_button,&QSFML::Components::Button::fallingEdge,this, &Pin::onButtonFallingEdge);
+    connect(m_button,&QSFML::Components::Button::down,this, &Pin::onButtonDown);
+    connect(m_button,&QSFML::Components::Button::risingEdge,this, &Pin::onButtonRisingEdge);
+
+    m_inverterButton = new QSFML::Components::Button(*other.m_inverterButton);
+    connect(m_inverterButton,&QSFML::Components::Button::fallingEdge,this, &Pin::onInverterButtonFallingEdge);
+
+    addComponent(m_painter);
+    addComponent(m_button);
+    addComponent(m_inverterButton);
+
+    setPosition(other.m_pos);
+}
+
 Pin::~Pin()
 {
     delete m_originalValue;
@@ -56,6 +88,14 @@ bool Pin::isConnectorToolEnabled()
     return m_connectorToolActive;
 }
 */
+void Pin::setPinNr(size_t nr)
+{
+    m_pinNr = nr;
+}
+size_t Pin::getPinNr() const
+{
+    return m_pinNr;
+}
 void Pin::setPosition(const sf::Vector2f &pos)
 {
     m_pos = pos;
@@ -186,7 +226,7 @@ bool Pin::addOutputConnection(Connection *con)
     m_outputConnections.push_back(con);
     con->setStartPin(this);
     connect(con, &Connection::destroyed, this, &Pin::onConnectionDeleted);
-    addChild(con);
+    CanvasObject::addChild(con);
     return true;
 }
 void Pin::removeOutputConnection(Connection *con)
@@ -195,7 +235,7 @@ void Pin::removeOutputConnection(Connection *con)
     {
         if(m_outputConnections[i] == con)
         {
-            removeChild(con);
+            CanvasObject::removeChild(con);
             con->setStartPin(nullptr);
             disconnect(con, &Connection::destroyed, this, &Pin::onConnectionDeleted);
             m_outputConnections.erase(m_outputConnections.begin() +i);
@@ -223,7 +263,109 @@ std::vector<Connection*> Pin::getOutputConnections() const
 {
     return m_outputConnections;
 }
+QJsonObject Pin::save() const
+{
+    std::string conSourceID;
+    size_t conSourceIndex = 0;
+    bool hasConnection = false;
+    if(m_inputConnection)
+    {
+        qDebug() << "Get parent from input";
+        Gate *parent = dynamic_cast<Gate*>(m_inputConnection->getParent()->getParent());
+        if(parent)
+        {
+            conSourceID = parent->getID();
+            if(m_inputConnection->getStartPin() != this)
+                conSourceIndex = m_inputConnection->getStartPin()->getPinNr();
+            else
+                conSourceIndex = m_inputConnection->getEndPin()->getPinNr();
+            hasConnection = true;
+        }
+        else
+            qDebug() << "No parent from input";
+    }
 
+    // Combine the QJsonObject with the base object of this
+    return combine(ISerializable::save(),
+    QJsonObject
+    {
+        // Add the properties of this object here
+        // Do not take the same keyvalues two times,
+        // also not the keys of the base class
+        {"pinNr", (int)m_pinNr},
+     //   {"type" , m_type},
+     //   {"orientation", m_orientation},
+        {"value", m_value->getValue()},
+     //   {"pos", sfVector2fToString(m_pos)},
+     //   {"size", sfVector2fToString(m_size)},
+        {"inverted", m_isInverted},
+        {"hasInpCon", hasConnection},
+        {"conSourceID", conSourceID.c_str()},
+        {"conPinNr", (int)conSourceIndex},
+    });
+}
+bool Pin::read(const QJsonObject &reader)
+{
+    bool success = true;
+    // Read the value for the base class
+    success = ISerializable::read(reader);
+
+    int pinNr = 0;
+    success &= extract(reader, pinNr, "pinNr");
+    m_pinNr = pinNr;
+    int value;
+    success &= extract(reader, value, "value");
+    m_value->setValue((LogicSignal::Digital)value);
+    success &= extract(reader,m_isInverted, "inverted");
+
+    int pinIndex = 0;
+    success &= extract(reader,m__hasPinConnection, "hasInpCon");
+    success &= extract(reader,m__pinConGateID, "conSourceID");
+    success &= extract(reader,pinIndex, "conPinNr");
+    m__pinConPinNr = pinIndex;
+
+
+    return success;
+}
+void Pin::postLoad()
+{
+    if(m__hasPinConnection)
+    {
+        Gate *gate = databaseGetObject<Gate>(m__pinConGateID);
+        if(gate)
+        {
+            Connection::currentlyConnecting = new Connection("Connection");
+            Pin *otherGateOutP = gate->getOutputPin(m__pinConPinNr);
+            if(!otherGateOutP)
+            {
+                qDebug() << "Pin::read() Can't find outputPin of source Gate ID: "<<m__pinConGateID.c_str();
+                return;
+            }
+            if(otherGateOutP->addOutputConnection(Connection::currentlyConnecting))
+            {
+                if(setInputConnection(Connection::currentlyConnecting))
+                {
+                    Connection::currentlyConnecting = nullptr;
+                }
+                else
+                {
+                    qDebug() << "can't add connection";
+                }
+            }
+            else
+            {
+                delete Connection::currentlyConnecting;
+                Connection::currentlyConnecting = nullptr;
+                qDebug() << "Pin::read() Can't create connection from Gate ID: "<<m__pinConGateID.c_str();
+                return;
+            }
+        }
+        else
+        {
+            qDebug() << "Pin::read() Can't load inputConnection from Gate ID: "<<m__pinConGateID.c_str();
+        }
+    }
+}
 
 void Pin::updateGeomoetry()
 {

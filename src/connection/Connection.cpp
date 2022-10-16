@@ -28,6 +28,23 @@ Connection::Connection(const std::string &name,
 
     m_line->setEnabled(false);
 }
+Connection::Connection(const Connection &other)
+    : CanvasObject(other)
+{
+    m_followMouse = other.m_followMouse;
+    m_signal = nullptr;
+    m_startPin = nullptr;
+    m_endPin = nullptr;
+    m_line = new QSFML::Components::Line(*other.m_line);
+
+    m_mouseFollower = new QSFML::Components::MouseFollower(*other.m_mouseFollower);
+    connect(m_mouseFollower, &QSFML::Components::MouseFollower::mousePosChanged,
+            this, &Connection::mousePosChanged);
+
+    setThickness(other.getThickness());
+    addComponent(m_mouseFollower);
+    addComponent(m_line);
+}
 Connection::~Connection()
 {
     qDebug() << "delete Connection";
@@ -79,6 +96,8 @@ void Connection::setEndPin(Pin *end)
     m_endPin = end;
     m_followMouse = false;
     m_mouseFollower->setEnabled(false);
+    if(!m_line->isEnabled())
+        m_line->setEnabled(true);
 }
 void Connection::setSignal(const LogicSignal *signal)
 {
@@ -91,6 +110,14 @@ void Connection::setSignal(const LogicSignal *signal)
 const LogicSignal *Connection::getSignal() const
 {
     return m_signal;
+}
+Pin* Connection::getStartPin() const
+{
+    return m_startPin;
+}
+Pin* Connection::getEndPin() const
+{
+    return m_endPin;
 }
 void Connection::update()
 {

@@ -5,6 +5,7 @@
 #include "Line.h"
 #include "LogicSignal.h"
 
+
 class Connection : public QObject, public QSFML::Objects::CanvasObject
 {
     Q_OBJECT
@@ -13,6 +14,7 @@ class Connection : public QObject, public QSFML::Objects::CanvasObject
     public:
         Connection(const std::string &name = "Connection",
                    CanvasObject *parent = nullptr);
+        Connection(const Connection &other);
         ~Connection();
 
 
@@ -35,7 +37,11 @@ class Connection : public QObject, public QSFML::Objects::CanvasObject
         void setSignal(const LogicSignal *signal);
         const LogicSignal *getSignal() const;
 
+        Pin* getStartPin() const;
+        Pin* getEndPin() const;
+
         void update() override;
+
 
 
         static Connection *currentlyConnecting;

@@ -5,6 +5,8 @@
 #include "Drawable.h"
 #include "LogicSignal.h"
 #include "EditingTool.h"
+#include "ISerializable.h"
+#include "sfSerializer.h"
 
 enum Orientation
 {
@@ -13,7 +15,7 @@ enum Orientation
     right,
     down
 };
-class Pin : public QObject, public QSFML::Objects::CanvasObject
+class Pin : public QObject, public QSFML::Objects::CanvasObject, public ISerializable
 {
         Q_OBJECT
         class PinPainter;
@@ -28,12 +30,18 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject
 
         Pin(const std::string &name = "MyObject",
             CanvasObject *parent = nullptr);
+        Pin(const Pin &other);
         ~Pin();
+
+        IMPLEMENT_ISERIALIZABLE_CONST_FUNC(Pin)
 
         void update() override;
 
        // static void enableConnecterTool(bool enable);
        // static bool isConnectorToolEnabled();
+
+        void setPinNr(size_t nr);
+        size_t getPinNr() const;
 
         void setPosition(const sf::Vector2f &pos);
         const sf::Vector2f &getPosition() const;
@@ -59,6 +67,11 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject
         Connection *getInputConnection() const;
         std::vector<Connection*> getOutputConnections() const;
 
+        // Serialize
+        QJsonObject save() const override;
+        bool read(const QJsonObject &reader) override;
+        void postLoad() override;
+
     signals:
         void pinButtonFallingEdge();
         void pinButtonDown();
@@ -83,6 +96,7 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject
         LogicSignal *m_originalValue;
         sf::Vector2f m_pos;
         sf::Vector2f m_size;
+        size_t m_pinNr;
 
         bool m_isInverted;
 
@@ -93,6 +107,11 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject
         PinPainter *m_painter;
         QSFML::Components::Button *m_button;
         QSFML::Components::Button *m_inverterButton;
+
+        // Reloading data
+        bool m__hasPinConnection;
+        std::string m__pinConGateID;
+        size_t m__pinConPinNr;
 
         class PinPainter : public QSFML::Components::Drawable
         {

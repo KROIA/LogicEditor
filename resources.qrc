@@ -9,5 +9,7 @@
         <file>icons/Gates/InGate.png</file>
         <file>icons/Gates/Clock.png</file>
         <file>icons/delete.png</file>
+        <file>icons/floppy-disk.png</file>
+        <file>icons/refresh.png</file>
     </qresource>
 </RCC>

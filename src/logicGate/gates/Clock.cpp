@@ -21,6 +21,30 @@ Clock::Clock(const std::string &name,
     connect(m_timer, &QTimer::timeout, this, &Clock::onTimer);
     setFrequency(2);
 }
+Clock::Clock(const Clock &other)
+    : Gate(other)
+{
+    connect(getGateButton(),&QSFML::Components::Button::fallingEdge,
+            this, &Clock::onGateButtonFallingEdge);
+    setInputCount(other.getInputCount());
+    setOutputCount(other.getOutputCount());
+    m_on = other.m_on;
+    m_toggle = other.m_toggle;
+
+    qDebug() << "Create "<<getName().c_str()<<" gate";
+
+    setText(other.getText()->getText());
+
+
+
+    m_timer = new QTimer();
+    connect(m_timer, &QTimer::timeout, this, &Clock::onTimer);
+    setInterval(other.getInterval());
+    if(m_on)
+        startClock();
+    else
+        stopClock();
+}
 Clock::~Clock()
 {
     delete m_timer;
@@ -50,7 +74,43 @@ float Clock::getInterval() const
 {
     return m_interval;
 }
+// Serializer
+QJsonObject Clock::save() const
+{
+    // Combine the QJsonObject with the base object of this
+    return combine(Gate::save(),
+    QJsonObject
+    {
+        // Add the properties of this object here
+        // Do not take the same keyvalues two times,
+        // also not the keys of the base class
+        {"isOn" ,m_on},
+        {"toggle", m_toggle},
+        {"interval", m_interval},
+    });
+}
+bool Clock::read(const QJsonObject &reader)
+{
+    bool success = true;
+    // Read the value for the base class
+    success = Gate::read(reader);
 
+    // Read the values for this class
+    success &= extract(reader,m_on, "isOn");
+    success &= extract(reader,m_toggle,"toggle");
+    success &= extract(reader,m_interval,"interval");
+
+    setInterval(m_interval);
+    if(m_on)
+        startClock();
+    else
+        stopClock();
+    return success;
+}
+void Clock::postLoad()
+{
+
+}
 void Clock::setInputCount(size_t inputs)
 {
     Gate::setInputCount(inputs);

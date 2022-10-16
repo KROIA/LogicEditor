@@ -9,6 +9,8 @@ class AndGate: public Gate
                 CanvasObject *parent = nullptr);
         void update() override;
 
+        IMPLEMENT_ISERIALIZABLE_CONST_FUNC(AndGate);
+
         void setInputCount(size_t inputs) override;
 
 

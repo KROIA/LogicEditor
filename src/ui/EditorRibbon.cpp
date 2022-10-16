@@ -27,18 +27,38 @@ RIBBON_CLASS_NAME::~RIBBON_CLASS_NAME()
 // Add a new line with this macro and your new button struct name
 void RIBBON_CLASS_NAME::buildButtons()
 {
+    RIBBON_CALL_SETUP(EditButtons);
     RIBBON_CALL_SETUP(ConnectionButtons);
     RIBBON_CALL_SETUP(AddGateButtons);
     // RIBBON_CALL_SETUP(NEW_BUTTON_STRUCT_NAME);
 }
 
 // Implementation of the SoundsButton struct setup function
+RIBBON_SETUP_FUNC_IMPL(EditButtons)
+{
+    string tab   = "Editieren";    // define in which tab the buttons shuld be located
+    string group = "Projekt";    // define the group in the tab for the buttons
+
+    addTab(m_qIconBasePath+"document"+m_externIconsExtention, tab);
+
+   // RIBBON_BUTTONS(ConnectionButtons).load = buttonFactory<QToolButton>("Laden","Lädt",
+   //                                                 resourcePath("refresh"), true, tab, group);
+
+   // RIBBON_BUTTONS(ConnectionButtons).save = buttonFactory<QToolButton>("Speichern","Speichert die Software Option Datenbank",
+   //                                                 resourcePath("floppy-disk"), true, tab, group);
+    RIBBON_BUTTONS(EditButtons).load = buttonFactory<QToolButton>("Laden","Projekt laden",
+                                                                   resourcePath("refresh"), true, tab, group);
+    RIBBON_BUTTONS(EditButtons).save = buttonFactory<QToolButton>("Speichern","Projekt abspeichern",
+                                                                   resourcePath("floppy-disk"), true, tab, group);
+
+}
+
 RIBBON_SETUP_FUNC_IMPL(ConnectionButtons)
 {
     string tab   = "Editieren";    // define in which tab the buttons shuld be located
     string group = "Verbindung";    // define the group in the tab for the buttons
 
-    addTab(m_qIconBasePath+"document"+m_externIconsExtention, tab);
+    //addTab(m_qIconBasePath+"document"+m_externIconsExtention, tab);
 
    // RIBBON_BUTTONS(ConnectionButtons).load = buttonFactory<QToolButton>("Laden","Lädt",
    //                                                 resourcePath("refresh"), true, tab, group);

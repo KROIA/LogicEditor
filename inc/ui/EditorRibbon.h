@@ -83,6 +83,13 @@
 // NEW_BUTTONS [1]:
 // Create new button structs here:
 //  ...
+
+struct EditButtons
+{
+    QToolButton *save;
+    QToolButton *load;
+};
+
 struct ConnectionButtons
 {
     //QToolButton *load;
@@ -103,6 +110,7 @@ struct AddGateButtons
 
     QToolButton *remove;
 };
+
 
 // End of button structs
 
@@ -129,6 +137,7 @@ class RIBBON_CLASS_NAME : public QWidget
          * \return returns a buttonstruct which contains the buttons
          *         for this group
          */
+        RIBBON_IMPLEMENT_STRUCT(EditButtons);
         RIBBON_IMPLEMENT_STRUCT(ConnectionButtons);
         RIBBON_IMPLEMENT_STRUCT(AddGateButtons);
 

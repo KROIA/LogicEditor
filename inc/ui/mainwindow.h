@@ -6,6 +6,7 @@
 #include "Canvas.h"
 #include "EditingTool.h"
 #include "KeyPressEvent.h"
+#include "database.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -20,6 +21,9 @@ class MainWindow : public QMainWindow
         ~MainWindow();
 
     private slots:
+        void onLoad();
+        void onSave();
+
         void onAddConnection();
         void onRemoveConnection();
 
@@ -37,6 +41,7 @@ class MainWindow : public QMainWindow
         Ui::MainWindow *ui;
         EditorRibbon *m_ribbon;
         QSFML::Canvas *m_canvas;
+        Database *m_database;
 
         QSFML::Components::KeyPressEvent *m_escKey;
 };

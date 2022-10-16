@@ -20,7 +20,9 @@ INCLUDEPATH += $$inc \
                $$inc/logicGate \
                $$inc/logicGate/gates \
                $$inc/connection \
-               $$inc/ui
+               $$inc/ui \
+               $$inc/serialization \
+               $$inc/utilities
 
 HEADERS += \
     $$inc/ui/mainwindow.h \
@@ -30,13 +32,20 @@ HEADERS += \
     $$inc/logicGate/gates/AndGate.h \
     $$inc/connection/Connection.h \
     $$inc/LogicSignal.h \
-    inc/EditingTool.h \
-    inc/logicGate/LogicGates.h \
-    inc/logicGate/gates/Clock.h \
-    inc/logicGate/gates/InputGate.h \
-    inc/logicGate/gates/NotGate.h \
-    inc/logicGate/gates/OrGate.h \
-    inc/logicGate/gates/XorGate.h
+    $$inc/EditingTool.h \
+    $$inc/logicGate/LogicGates.h \
+    $$inc/logicGate/gates/Clock.h \
+    $$inc/logicGate/gates/InputGate.h \
+    $$inc/logicGate/gates/NotGate.h \
+    $$inc/logicGate/gates/OrGate.h \
+    $$inc/logicGate/gates/XorGate.h \
+    $$inc/serialization/ISerializable.h \
+    $$inc/serialization/database.h \
+    $$inc/serialization/databaseDeclaration.h \
+    $$inc/serialization/databaseID.h \
+    $$inc/serialization/databaseObject.h \
+    $$inc/utilities/sfSerializer.h \
+    $$inc/utilities/debug.h
 
 
 SOURCES += \
@@ -48,12 +57,18 @@ SOURCES += \
     $$src/logicGate/gates/AndGate.cpp \
     $$src/connection/Connection.cpp \
     $$src/LogicSignal.cpp \
-    src/EditingTool.cpp \
-    src/logicGate/gates/Clock.cpp \
-    src/logicGate/gates/InputGate.cpp \
-    src/logicGate/gates/NotGate.cpp \
-    src/logicGate/gates/OrGate.cpp \
-    src/logicGate/gates/XorGate.cpp
+    $$src/EditingTool.cpp \
+    $$src/logicGate/gates/Clock.cpp \
+    $$src/logicGate/gates/InputGate.cpp \
+    $$src/logicGate/gates/NotGate.cpp \
+    $$src/logicGate/gates/OrGate.cpp \
+    $$src/logicGate/gates/XorGate.cpp \
+    $$src/serialization/ISerializable.cpp \
+    $$src/serialization/database.cpp \
+    $$src/serialization/databaseID.cpp \
+    $$src/serialization/databaseObject.cpp \
+    $$src/utilities/debug.cpp \
+    src/utilities/sfSerializer.cpp
 
 
 FORMS += \

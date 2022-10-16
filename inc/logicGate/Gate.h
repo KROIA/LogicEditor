@@ -7,15 +7,19 @@
 #include "MouseFollower.h"
 #include "MousePressEvent.h"
 #include "Text.h"
+#include "ISerializable.h"
 
-class Gate : public QObject, public QSFML::Objects::CanvasObject
+class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerializable
 {
     Q_OBJECT
         class GateDrawable;
         friend GateDrawable;
     public:
+        Gate(const Gate &other);
         Gate(const std::string &name = "Gate",
              CanvasObject *parent = nullptr);
+
+        IMPLEMENT_ISERIALIZABLE_CONST_FUNC(Gate);
 
         void update() override;
 
@@ -45,7 +49,17 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject
         void snapToMouse(bool enable);
 
         virtual void setInputCount(size_t inputs);
+        size_t getInputCount() const;
         virtual void setOutputCount(size_t outputs);
+        size_t getOutputCount() const;
+
+        Pin* getInputPin(size_t pinNr) const;
+        Pin* getOutputPin(size_t pinNr) const;
+
+        // Serializer
+        QJsonObject save() const override;
+        bool read(const QJsonObject &reader) override;
+        void postLoad() override;
 
     private slots:
        void onButtonFallingEdge();

@@ -1,5 +1,12 @@
 #include "Gate.h"
 
+
+Gate::Gate(const Gate &other)
+    :   QObject()
+    ,   QSFML::Objects::CanvasObject(other.getName(),nullptr)
+{
+
+}
 Gate::Gate(const std::string &name,
            CanvasObject *parent)
     :   QObject()
@@ -58,6 +65,7 @@ void Gate::update()
 void Gate::setText(const std::string &text)
 {
     m_symbolicText->setText(text);
+    updatePosition();
 }
 QSFML::Components::Text *Gate::getText() const
 {
@@ -66,6 +74,7 @@ QSFML::Components::Text *Gate::getText() const
 void  Gate::setCharacterSize(unsigned int size)
 {
     m_symbolicText->setCharacterSize(size);
+    updatePosition();
 }
 unsigned int  Gate::getCharacterSize() const
 {
@@ -146,7 +155,10 @@ void Gate::snapToMouse(bool enable)
 void Gate::setInputCount(size_t inputs)
 {
     for(size_t i=0; i<m_inputs.size(); ++i)
+    {
+        ISerializable::removeChild(m_outputs[i]);
         deleteChild(m_inputs[i]);
+    }
     m_inputs.clear();
     m_inputs.reserve(inputs);
 
@@ -155,15 +167,24 @@ void Gate::setInputCount(size_t inputs)
     {
         Pin *pin = new Pin("IN "+std::to_string(i+1));
         pin->setType(Pin::Type::input);
+        pin->setPinNr(i);
         m_inputs.push_back(pin);
-        addChild(pin);
+        CanvasObject::addChild(pin);
+        ISerializable::addChild(pin);
     }
     updateGeomoetry();
+}
+size_t Gate::getInputCount() const
+{
+    return m_inputs.size();
 }
 void Gate::setOutputCount(size_t outputs)
 {
     for(size_t i=0; i<m_outputs.size(); ++i)
+    {
+        ISerializable::removeChild(m_outputs[i]);
         deleteChild(m_outputs[i]);
+    }
     m_outputs.clear();
     m_outputs.reserve(outputs);
 
@@ -172,11 +193,150 @@ void Gate::setOutputCount(size_t outputs)
     {
         Pin *pin = new Pin("OUT "+std::to_string(i+1));
         pin->setType(Pin::Type::output);
-
+        pin->setPinNr(i);
         m_outputs.push_back(pin);
-        addChild(pin);
+        CanvasObject::addChild(pin);
+        ISerializable::addChild(pin);
     }
     updateGeomoetry();
+}
+size_t Gate::getOutputCount() const
+{
+    return m_outputs.size();
+}
+Pin* Gate::getInputPin(size_t pinNr) const
+{
+    Pin *pin = nullptr;
+    bool search = false;
+    if(m_inputs.size() > pinNr)
+    {
+        pin = m_inputs[pinNr];
+        if(pin->getPinNr() != pinNr)
+            search = true;
+    }
+    else
+        search = true;
+
+    if(search)
+    {
+        for(size_t i=0; i<m_inputs.size(); ++i)
+        {
+            pin = m_inputs[pinNr];
+            if(pin->getPinNr() == pinNr)
+                return pin;
+        }
+        return nullptr;
+    }
+    return pin;
+}
+Pin* Gate::getOutputPin(size_t pinNr) const
+{
+    Pin *pin = nullptr;
+    bool search = false;
+    if(m_outputs.size() > pinNr)
+    {
+        pin = m_outputs[pinNr];
+        if(pin->getPinNr() != pinNr)
+            search = true;
+    }
+    else
+        search = true;
+
+    if(search)
+    {
+        for(size_t i=0; i<m_outputs.size(); ++i)
+        {
+            pin = m_outputs[pinNr];
+            if(pin->getPinNr() == pinNr)
+                return pin;
+        }
+        return nullptr;
+    }
+    return pin;
+}
+
+QJsonObject Gate::save() const
+{
+    // Combine the QJsonObject with the base object of this
+    qDebug() << "save() "<<getName().c_str();
+    QJsonObject obj = ISerializable::save();
+
+    obj["inputs"] = (int)m_inputs.size();
+    for(size_t i=0; i<m_inputs.size(); ++i)
+    {
+        obj["INP_"+QString::number(i)] = m_inputs[i]->save();
+    }
+    obj["outputs"] = (int)m_outputs.size();
+    for(size_t i=0; i<m_outputs.size(); ++i)
+    {
+        obj["OUT_"+QString::number(i)] = m_outputs[i]->save();
+    }
+
+    return combine(obj,
+    QJsonObject
+    {
+        // Add the properties of this object here
+        // Do not take the same keyvalues two times,
+        // also not the keys of the base class
+        {"TL", sfVector2fToString(m_topLeft)},
+        {"origin", sfVector2fToString(m_origin)},
+        {"size", sfVector2fToString(m_size)},
+        {"orientation", m_orientation},
+        {"dragEN", m_draggingIsEnabled},
+        {"autoSize", m_autoSize},
+        {"autoSizeInterval", m_autoSizeInterval},
+    });
+}
+bool Gate::read(const QJsonObject &reader)
+{
+    bool success = true;
+    // Read the value for the base class
+    success = ISerializable::read(reader);
+
+    std::string TL;
+    std::string origin;
+    std::string size;
+
+    success &= extract(reader,TL, "TL");
+    success &= extract(reader,origin, "origin");
+    success &= extract(reader,size, "size");
+
+    m_topLeft = stringToSfVector2f(TL.c_str());
+    m_origin  = stringToSfVector2f(origin.c_str());
+    m_size    = stringToSfVector2f(size.c_str());
+
+    int orient = 0;
+    success &= extract(reader, orient, "orientation");
+    m_orientation = (Orientation)orient;
+
+    success &= extract(reader,m_draggingIsEnabled, "dragEN");
+    success &= extract(reader,m_autoSize, "autoSize");
+    success &= extract(reader,m_autoSizeInterval, "autoSizeInterval");
+
+    int inputs = 0;
+    int outputs = 0;
+    success &= extract(reader,inputs, "inputs");
+    success &= extract(reader,outputs, "outputs");
+    setInputCount(inputs);
+    setOutputCount(outputs);
+
+    for(size_t i=0; i<m_inputs.size(); ++i)
+    {
+        QJsonObject pinObj = reader["INP_"+QString::number(i)].toObject();
+        m_inputs[i]->read(pinObj);
+    }
+
+    return success;
+}
+void Gate::postLoad()
+{
+    for(size_t i=0; i<m_inputs.size(); ++i)
+    {
+        m_inputs[i]->postLoad();
+    }
+
+    updateGeomoetry();
+
 }
 
 void Gate::onGateDragTo(const sf::Vector2f &worldPos,
