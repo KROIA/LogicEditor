@@ -13,6 +13,7 @@ DATABASE_USE_OBJECT(XorGate)
 DATABASE_USE_OBJECT(NotGate)
 DATABASE_USE_OBJECT(Clock)
 DATABASE_USE_OBJECT(InputGate)
+DATABASE_USE_OBJECT(Block)
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -30,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     AddGateButtons addGateButt = m_ribbon->getAddGateButtons();
     connect(addGateButt.addInputGate, &QToolButton::clicked, this, &MainWindow::onAddInputGate);
+    connect(addGateButt.addOutputGate, &QToolButton::clicked, this, &MainWindow::onAddOutputGate);
     connect(addGateButt.addClock, &QToolButton::clicked, this, &MainWindow::onAddClock);
     connect(addGateButt.addAndGate, &QToolButton::clicked, this, &MainWindow::onAddAndGate);
     connect(addGateButt.addOrGate, &QToolButton::clicked, this, &MainWindow::onAddOrGate);
@@ -55,6 +57,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_database->defineSaveableObject<NotGate>();
     m_database->defineSaveableObject<Clock>();
     m_database->defineSaveableObject<InputGate>();
+    m_database->defineSaveableObject<OutputGate>();
+    m_database->defineSaveableObject<Block>();
+    m_database->defineSaveableObject<Pin>();
 
     //Pin *pin = new Pin("MyPin");
     //m_canvas->addObject(pin);
@@ -82,6 +87,8 @@ MainWindow::MainWindow(QWidget *parent)
     keyEvents->addComponent(m_escKey);
     m_canvas->addObject(keyEvents);
 
+    Block::currentEditingBlock = new Block("Block");
+    m_canvas->addObject(Block::currentEditingBlock);
 
 }
 
@@ -96,7 +103,8 @@ void MainWindow::onLoad()
     std::vector<Gate *> loaded  = m_database->getObjects<Gate>();
     for(size_t i=0; i<loaded.size(); ++i)
     {
-        m_canvas->addObject(loaded[i]);
+        Block::currentEditingBlock->addGate(loaded[i]);
+        //m_canvas->addObject(loaded[i]);
     }
 }
 void MainWindow::onSave()
@@ -109,6 +117,7 @@ void MainWindow::onSave()
         m_database->addObject(toSave[i]);
     }
     m_database->save("Test.json");
+
 
 }
 void MainWindow::onAddConnection()
@@ -127,7 +136,15 @@ void MainWindow::onAddInputGate()
     InputGate *gate = new InputGate("Input");
     gate->enableMouseDrag(true);
     gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    Block::currentEditingBlock->addGate(gate);
+}
+void MainWindow::onAddOutputGate()
+{
+    EditingTool::clear();
+    OutputGate *gate = new OutputGate("Output");
+    gate->enableMouseDrag(true);
+    gate->snapToMouse(true);
+    Block::currentEditingBlock->addGate(gate);
 }
 void MainWindow::onAddClock()
 {
@@ -136,7 +153,7 @@ void MainWindow::onAddClock()
     gate->setFrequency(2);
     gate->enableMouseDrag(true);
     gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    Block::currentEditingBlock->addGate(gate);
 }
 void MainWindow::onAddAndGate()
 {
@@ -145,7 +162,7 @@ void MainWindow::onAddAndGate()
     gate->setInputCount(2);
     gate->enableMouseDrag(true);
     gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    Block::currentEditingBlock->addGate(gate);
 }
 void MainWindow::onAddOrGate()
 {
@@ -153,7 +170,7 @@ void MainWindow::onAddOrGate()
     OrGate *gate = new OrGate("OrGate");
     gate->enableMouseDrag(true);
     gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    Block::currentEditingBlock->addGate(gate);
 }
 void MainWindow::onAddXorGate()
 {
@@ -161,7 +178,7 @@ void MainWindow::onAddXorGate()
     XorGate *gate = new XorGate("XorGate");
     gate->enableMouseDrag(true);
     gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    Block::currentEditingBlock->addGate(gate);
 }
 void MainWindow::onAddNotGate()
 {
@@ -169,7 +186,7 @@ void MainWindow::onAddNotGate()
     NotGate *gate = new NotGate("NotGate");
     gate->enableMouseDrag(true);
     gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    Block::currentEditingBlock->addGate(gate);
 }
 
 void MainWindow::onRemoveGate()

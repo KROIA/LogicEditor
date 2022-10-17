@@ -28,6 +28,7 @@ class MainWindow : public QMainWindow
         void onRemoveConnection();
 
         void onAddInputGate();
+        void onAddOutputGate();
         void onAddClock();
         void onAddAndGate();
         void onAddOrGate();

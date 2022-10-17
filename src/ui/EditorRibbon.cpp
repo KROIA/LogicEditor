@@ -84,10 +84,13 @@ RIBBON_SETUP_FUNC_IMPL(AddGateButtons)
 
    // RIBBON_BUTTONS(ConnectionButtons).save = buttonFactory<QToolButton>("Speichern","Speichert die Software Option Datenbank",
    //                                                 resourcePath("floppy-disk"), true, tab, group);
+
     RIBBON_BUTTONS(AddGateButtons).addClock = buttonFactory<QToolButton>("","Neues Tacktsignal erstellen.",
                                                                       resourcePath("Gates/Clock"), true, tab, group);
-    RIBBON_BUTTONS(AddGateButtons).addInputGate = buttonFactory<QToolButton>("","Neue Signalquelle erstellen. Kann von Hand geschaltet werden.",
+    RIBBON_BUTTONS(AddGateButtons).addInputGate = buttonFactory<QToolButton>("","Neuer Signaleingang erstellen.",
                                                                       resourcePath("Gates/InGate"), true, tab, group);
+    RIBBON_BUTTONS(AddGateButtons).addOutputGate = buttonFactory<QToolButton>("","Neuer Signalausgang erstellen.",
+                                                                             resourcePath("Gates/OutGate"), true, tab, group);
     RIBBON_BUTTONS(AddGateButtons).addAndGate = buttonFactory<QToolButton>("","Neues UND Gatter erstellen",
                                                                       resourcePath("Gates/AndGate"), true, tab, group);
     RIBBON_BUTTONS(AddGateButtons).addOrGate = buttonFactory<QToolButton>("","Neues ODER Gatter erstellen",

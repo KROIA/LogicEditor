@@ -2,7 +2,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++17
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -45,7 +45,9 @@ HEADERS += \
     $$inc/serialization/databaseID.h \
     $$inc/serialization/databaseObject.h \
     $$inc/utilities/sfSerializer.h \
-    $$inc/utilities/debug.h
+    $$inc/utilities/debug.h \
+    inc/logicGate/gates/Block.h \
+    inc/logicGate/gates/OutputGate.h
 
 
 SOURCES += \
@@ -68,6 +70,8 @@ SOURCES += \
     $$src/serialization/databaseID.cpp \
     $$src/serialization/databaseObject.cpp \
     $$src/utilities/debug.cpp \
+    src/logicGate/gates/Block.cpp \
+    src/logicGate/gates/OutputGate.cpp \
     src/utilities/sfSerializer.cpp
 
 

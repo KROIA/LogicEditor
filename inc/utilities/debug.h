@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <wchar.h>
-#include <windows.h>
+//#include <windows.h>
 #include <string>
 
 namespace Debug

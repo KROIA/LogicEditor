@@ -102,6 +102,7 @@ struct ConnectionButtons
 struct AddGateButtons
 {
     QToolButton *addInputGate;
+    QToolButton *addOutputGate;
     QToolButton *addClock;
     QToolButton *addAndGate;
     QToolButton *addOrGate;

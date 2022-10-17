@@ -34,6 +34,8 @@ Pin::Pin(const std::string &name,
 
 
     m_inputConnection = nullptr;
+    m__pinConPinNr = 0;
+    m__hasPinConnection = false;
 }
 Pin::Pin(const Pin &other)
     : CanvasObject(other)
@@ -62,6 +64,10 @@ Pin::Pin(const Pin &other)
     addComponent(m_inverterButton);
 
     setPosition(other.m_pos);
+    m_inputConnection = nullptr;
+
+    m__pinConPinNr = 0;
+    m__hasPinConnection = false;
 }
 
 Pin::~Pin()

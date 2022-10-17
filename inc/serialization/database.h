@@ -24,7 +24,7 @@ class Database
         Database();
         ~Database();
         template<typename T>
-        bool defineSaveableObject();
+        static bool defineSaveableObject();
 
         bool load(const std::string &jsonFile);
         bool save(const std::string &jsonFile) const;
@@ -47,14 +47,16 @@ class Database
         template<typename T>
         std::vector<T*> getObjects() const;
 
+        DatabaseObject* instantiateObject(const QJsonObject &obj);
+
         const static size_t npos = -1;
     private:
         void instantiateDatabase(const QJsonArray &objs);
-        void instantiateObject(const QJsonObject &obj);
 
-        void addObjectInternal(ISerializable* obj, const DatabaseID &id);
 
-        std::unordered_map<std::string, ISerializable*> m_saveableObjectTypes;
+        void addObjectInternal(DatabaseObject* obj);
+
+        static std::unordered_map<std::string, ISerializable*> m_saveableObjectTypes;
         std::unordered_map<std::string, DatabaseObject*> m_objects;
 
 };

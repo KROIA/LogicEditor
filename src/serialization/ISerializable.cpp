@@ -41,24 +41,45 @@ void ISerializable::addChild(ISerializable *obj)
         if(m_childs[i] == obj)
             return;
     m_childs.push_back(obj);
+    if(m_database)
+    {
+        m_database->addObject(obj);
+    }
 }
 void ISerializable::removeChild(ISerializable *obj)
 {
     for(size_t i=0; i<m_childs.size(); ++i)
         if(m_childs[i] == obj)
         {
+            if(m_database)
+            {
+                m_database->removeObject(obj);
+            }
+            //delete m_childs[i];
             m_childs.erase(m_childs.begin() + i);
             return;
         }
+}
+const std::vector<ISerializable*> &ISerializable::getChilds() const
+{
+    return m_childs;
 }
 
 QJsonObject ISerializable::save() const
 {
     QJsonObject obj;
-    /*for(size_t i=0; i<m_childs.size(); ++i)
+    int childCount = 0;
+    for(size_t i=0; i<m_childs.size(); ++i)
     {
-        combine(obj,m_childs[i]->save());
-    }*/
+        std::string childID;
+        if(m_childs[i]->m_id)
+        {
+            childID = m_childs[i]->m_id->getID();
+            obj["child_"+QString::number(childCount)] = childID.c_str();
+            ++childCount;
+        }
+    }
+    obj["childCount"] = childCount;
 
     // Combine the QJsonObject with the base object of this
     return combine(obj,
@@ -70,13 +91,37 @@ QJsonObject ISerializable::save() const
         {key_objectType.c_str(), className().c_str()},
     });
 }
-bool ISerializable::read(const QJsonObject &)
+bool ISerializable::read(const QJsonObject &data)
 {
-    return true;
+    int childCount = 0;
+    bool success = extract(data, childCount ,"childCount");
+
+    m_loadingChildIDList.reserve(childCount);
+    for(int i=0; i<childCount; ++i)
+    {
+        std::string childID;
+        success &= extract(data, childID ,"child_"+std::to_string(i));
+        if(childID.size())
+            m_loadingChildIDList.push_back(childID);
+    }
+    return success;
 }
 void ISerializable::postLoad()
 {
+    m_childs.reserve(m_loadingChildIDList.size());
+    for(size_t i=0; i<m_loadingChildIDList.size(); ++i)
+    {
+        ISerializable* child = databaseGetObject(m_loadingChildIDList[i]);
+        if(child)
+            m_childs.push_back(child);
+    }
+    m_loadingChildIDList.clear();
+}
 
+DatabaseObject *ISerializable::getInstantiated(const QJsonObject &data)
+{
+    if(!m_database) return nullptr;
+    return m_database->instantiateObject(data);
 }
 
 bool ISerializable::databaseObjectExists(ISerializable* obj) const
@@ -170,10 +215,26 @@ std::string ISerializable::extractClassName(const QJsonObject &data)
 void ISerializable::setParent(DatabaseID *id, DatabaseObject* dbObj, Database *db)
 {
     m_id = id;
-    m_database = db;
+
     m_parent = dbObj;
+
+    if(m_database)
+    {
+        for(size_t i=0; i<m_childs.size(); ++i)
+        {
+            m_database->removeObject(m_childs[i]);
+        }
+    }
+    m_database = db;
+    if(m_database)
+    {
+        for(size_t i=0; i<m_childs.size(); ++i)
+        {
+            m_database->addObject(m_childs[i]);
+        }
+    }
     for(size_t i=0; i<m_childs.size(); ++i)
     {
-        m_childs[i]->setParent(id, dbObj, db);
+        m_childs[i]->setParent(m_childs[i]->m_id, m_childs[i]->m_parent, m_database);
     }
 }

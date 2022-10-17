@@ -204,6 +204,69 @@ size_t Gate::getOutputCount() const
 {
     return m_outputs.size();
 }
+bool Gate::addInput(Pin *pin)
+{
+    if(!pin)
+        return false;
+    for(size_t i=0; i<m_inputs.size(); ++i)
+    {
+        if(m_inputs[i]->getPinNr() == pin->getPinNr())
+            return false;
+    }
+    pin->setType(Pin::Type::input);
+    m_inputs.push_back(pin);
+    CanvasObject::addChild(pin);
+    ISerializable::addChild(pin);
+    updateGeomoetry();
+    return true;
+}
+bool Gate::removeInput(Pin *pin)
+{
+    if(!pin) return false;
+    for(size_t i=0; i<m_inputs.size(); ++i)
+    {
+        if(m_inputs[i]->getPinNr() == pin->getPinNr())
+        {
+            m_inputs.erase(m_inputs.begin() + i);
+            CanvasObject::removeChild(pin);
+            ISerializable::removeChild(pin);
+            return true;
+        }
+    }
+    updateGeomoetry();
+    return false;
+}
+bool Gate::addOutput(Pin* pin)
+{
+    if(!pin)
+        return false;
+    for(size_t i=0; i<m_outputs.size(); ++i)
+    {
+        if(m_outputs[i]->getPinNr() == pin->getPinNr())
+            return false;
+    }
+    pin->setType(Pin::Type::output);
+    m_outputs.push_back(pin);
+    CanvasObject::addChild(pin);
+    ISerializable::addChild(pin);
+    updateGeomoetry();
+    return true;
+}
+bool Gate::removeOutput(Pin *pin)
+{
+    if(!pin) return false;
+    for(size_t i=0; i<m_outputs.size(); ++i)
+    {
+        if(m_outputs[i]->getPinNr() == pin->getPinNr())
+        {
+            m_outputs.erase(m_outputs.begin() + i);
+            CanvasObject::removeChild(pin);
+            ISerializable::removeChild(pin);
+            return true;
+        }
+    }
+    return false;
+}
 Pin* Gate::getInputPin(size_t pinNr) const
 {
     Pin *pin = nullptr;
@@ -253,6 +316,14 @@ Pin* Gate::getOutputPin(size_t pinNr) const
         return nullptr;
     }
     return pin;
+}
+const std::vector<Pin*> &Gate::getInputPins() const
+{
+    return m_inputs;
+}
+const std::vector<Pin*> &Gate::getOutputPins() const
+{
+    return m_outputs;
 }
 
 QJsonObject Gate::save() const
@@ -390,14 +461,6 @@ Gate::GateDrawable *Gate::getGateDrawable() const
 {
     return m_gateDrawable;
 }
-const std::vector<Pin*> &Gate::getInputPins() const
-{
-    return m_inputs;
-}
-const std::vector<Pin*> &Gate::getOutputPins() const
-{
-    return m_outputs;
-}
 
 void Gate::updateGeomoetry()
 {
@@ -442,6 +505,16 @@ void Gate::updateGeomoetry()
 }
 void Gate::updatePosition()
 {
+    std::sort( m_inputs.begin( ), m_inputs.end( ), [ ]( const Pin* lhs, const Pin* rhs )
+    {
+        return lhs->getPinNr() < rhs->getPinNr();
+    });
+
+    std::sort( m_outputs.begin( ), m_outputs.end( ), [ ]( const Pin* lhs, const Pin* rhs )
+    {
+        return lhs->getPinNr() < rhs->getPinNr();
+    });
+
     float inputSpacing  = m_size.y / (float)(m_inputs.size()+1);
     float outputSpacing = m_size.y / (float)(m_outputs.size()+1);
 

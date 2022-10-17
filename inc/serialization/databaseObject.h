@@ -25,7 +25,7 @@ public:
     DatabaseObject(ISerializable *obj,
                    const DatabaseID &id,
                    Database *parent);
-
+    DatabaseObject(const QJsonObject &json, ISerializable* cloanable, Database *parent);
     /**
      * \note Will delete the ISerializable object pointer.
      */

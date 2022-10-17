@@ -75,6 +75,7 @@ class ISerializable
     protected:
         void addChild(ISerializable *obj);
         void removeChild(ISerializable *obj);
+        const std::vector<ISerializable*> &getChilds() const;
 
         /**
          * \brief Reimplement this function in each derived class.
@@ -170,6 +171,9 @@ class ISerializable
 
 
         // Interface function to access the same database, this object is contained in
+
+        DatabaseObject *getInstantiated(const QJsonObject &data);
+
 
         /**
          * \brief Checks if the given object is in the database or not
@@ -293,6 +297,8 @@ class ISerializable
         DatabaseID *m_id;        //!< ptr to the parent DatabaseObjects->m_id. nullptr, if not assigned to a database
         DatabaseObject *m_parent;//!< ptr to the parent DatabaseObject. nullptr, if not assigned to a database
         Database *m_database;    //!< ptr to the parent Database. nullptr, if not assigned to a database
+
+        std::vector<std::string> m_loadingChildIDList;
 };
 
 /**
@@ -301,7 +307,7 @@ class ISerializable
  *        Implements the virtual className() function of the ISerializable
  */
 #define IMPLEMENT_ISERIALIZABLE_CONST_FUNC(classNameVal) \
-classNameVal* clone(const QJsonObject &reader) const override\
+classNameVal* clone(const QJsonObject &reader) const override \
 { \
     classNameVal *obj = new classNameVal(); \
     obj->read(reader); \

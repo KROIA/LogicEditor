@@ -5,7 +5,7 @@
 const std::string DatabaseID::key_id = "id";
 DatabaseID::DatabaseID()
 {
-
+    generateRandomID();
 }
 DatabaseID::DatabaseID(const std::string &id)
 {

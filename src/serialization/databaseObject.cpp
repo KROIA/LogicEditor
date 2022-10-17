@@ -11,6 +11,14 @@ DatabaseObject::DatabaseObject(ISerializable *obj,
     m_obj->setParent(&m_id, this, parent);
 
 }
+DatabaseObject::DatabaseObject(const QJsonObject &json, ISerializable* cloanable,  Database *parent)
+{
+    m_parent = parent;
+    m_id.setID(json[DatabaseID::key_id.c_str()].toString().toStdString());
+    ISerializable *instance = cloanable->clone(json);
+    m_obj = instance;
+    m_obj->setParent(&m_id, this, parent);
+}
 
 DatabaseObject::~DatabaseObject()
 {
@@ -38,6 +46,7 @@ void DatabaseObject::objectGotDeleted()
 }
 void DatabaseObject::setObjectNullptr()
 {
+    if(!m_obj) return;
     m_obj->setParent(nullptr, nullptr, nullptr);
     m_obj = nullptr;
 }

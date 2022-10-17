@@ -52,9 +52,15 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
         size_t getInputCount() const;
         virtual void setOutputCount(size_t outputs);
         size_t getOutputCount() const;
+        bool addInput(Pin *pin);
+        bool removeInput(Pin *pin);
+        bool addOutput(Pin* pin);
+        bool removeOutput(Pin *pin);
 
         Pin* getInputPin(size_t pinNr) const;
         Pin* getOutputPin(size_t pinNr) const;
+        const std::vector<Pin*> &getInputPins() const;
+        const std::vector<Pin*> &getOutputPins() const;
 
         // Serializer
         QJsonObject save() const override;
@@ -77,11 +83,11 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
         QSFML::Components::Button *getGateButton() const;
         GateDrawable *getGateDrawable() const;
 
-        const std::vector<Pin*> &getInputPins() const;
-        const std::vector<Pin*> &getOutputPins() const;
-    private:
         void updateGeomoetry();
         void updatePosition();
+
+    private:
+
 
         QSFML::Components::Button *m_button;
         QSFML::Components::MouseFollower *m_mouseFollower;
