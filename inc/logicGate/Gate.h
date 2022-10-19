@@ -103,6 +103,10 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
         bool m_autoSize;
         float m_autoSizeInterval;
 
+        sf::Vector2f m_currentMovingVectorFromStart;
+        sf::Vector2f m_currentMovingStart;
+        float m_minMovingDistance;
+
         class GateDrawable : public QSFML::Components::Drawable
         {
             public:

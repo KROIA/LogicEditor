@@ -4,11 +4,14 @@ InputGate::InputGate(const std::string &name,
         CanvasObject *parent)
     : Gate(name,parent)
 {
-    connect(getGateButton(),&QSFML::Components::Button::fallingEdge,
-            this, &InputGate::onGateButtonFallingEdge);
+    connect(getGateButton(),&QSFML::Components::Button::risingEdge,
+            this, &InputGate::onGateButtonRisingEdge);
+    //connect(getGateButton(),&QSFML::Components::Button::fallingEdge,
+    //        this, &InputGate::onGateButtonFallingEdge);
     setInputCount(0);
     setOutputCount(1);
     m_on = false;
+   // m_tryToSwitch = false;
 
     qDebug() << "Create "<<name.c_str()<<" gate";
 
@@ -19,9 +22,12 @@ InputGate::InputGate(const InputGate &other)
     : Gate(other)
 {
     m_on = other.m_on;
+  //  m_tryToSwitch = false;
 
-    connect(getGateButton(),&QSFML::Components::Button::fallingEdge,
-            this, &InputGate::onGateButtonFallingEdge);
+    connect(getGateButton(),&QSFML::Components::Button::risingEdge,
+            this, &InputGate::onGateButtonRisingEdge);
+   // connect(getGateButton(),&QSFML::Components::Button::fallingEdge,
+   //         this, &InputGate::onGateButtonFallingEdge);
 }
 
 void InputGate::switchOn()
@@ -84,9 +90,16 @@ void InputGate::setOutputCount(size_t outputs)
 {
     Gate::setOutputCount(outputs);
 }
+/*
 void InputGate::onGateButtonFallingEdge()
 {
-    //setOrientation((Orientation)((getOrientation()+1)%4));
+    m_tryToSwitch = true;
+}
+*/
+void InputGate::onGateButtonRisingEdge()
+{
+    if(EditingTool::getCurrentTool() != EditingTool::none)
+        return;
     m_on = !m_on;
     std::vector<Pin*> out = getOutputPins();
     for(size_t i=0; i<out.size(); ++i)
@@ -94,4 +107,3 @@ void InputGate::onGateButtonFallingEdge()
         out[i]->setValue((LogicSignal::Digital)m_on);
     }
 }
-

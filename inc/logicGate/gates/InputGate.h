@@ -21,10 +21,13 @@ class InputGate: public Gate
 
     private slots:
         void onGateButtonFallingEdge();
+        void onGateButtonRisingEdge();
     protected:
         void setInputCount(size_t inputs) override;
         void setOutputCount(size_t outputs) override;
 
     private:
         bool m_on;
+
+       // bool m_tryToSwitch;
 };

@@ -1,5 +1,6 @@
 #include "Gate.h"
-
+#include "EditingTool.h"
+#include "VectorOperations.h"
 
 Gate::Gate(const Gate &other)
     :   QObject()
@@ -43,6 +44,8 @@ Gate::Gate(const std::string &name,
     addComponent(m_symbolicText);
 
     enableMouseDrag(false);
+
+    m_minMovingDistance = 10;
 
 }
 
@@ -342,7 +345,21 @@ void Gate::postLoad()
 void Gate::onGateDragTo(const sf::Vector2f &worldPos,
                         const sf::Vector2i &)
 {
-    setPosition(worldPos);
+
+    if(EditingTool::getCurrentTool() == EditingTool::Tool::none)
+    {
+        m_currentMovingVectorFromStart = m_currentMovingStart - worldPos;
+        float length = getVectorLength(m_currentMovingVectorFromStart);
+        qDebug() <<length;
+        if(length >= m_minMovingDistance)
+        {
+            EditingTool::setCurrentTool(EditingTool::Tool::moveGate);
+            EditingTool::setCurrentlyMoving(this);
+            m_isDragging = true;
+        }
+    }
+    if(EditingTool::getCurrentlyMoving() == this)
+        setPosition(worldPos);
 }
 void Gate::onRightMouseButtonPressed()
 {
@@ -355,12 +372,13 @@ void Gate::onButtonFallingEdge()
     {
         deleteThis();
         return;
-    }
-    if(m_draggingIsEnabled)
+    }else if(EditingTool::getCurrentTool() != EditingTool::Tool::moveGate &&
+             m_draggingIsEnabled)
     {
-        m_isDragging = true;
-        m_mouseFollower->setEnabled(m_isDragging);
-        m_mousePressEvent->setEnabled(m_isDragging);
+        qDebug() <<"Falling";
+        m_currentMovingStart = getPosition();
+        m_mouseFollower->setEnabled(true);
+        m_mousePressEvent->setEnabled(true);
     }
 }
 /*
@@ -370,9 +388,19 @@ void Gate::onButtonDown()
 }*/
 void Gate::onButtonRisingEdge()
 {
-    m_isDragging = false;
-    m_mouseFollower->setEnabled(m_isDragging);
-    m_mousePressEvent->setEnabled(m_isDragging);
+    //if(EditingTool::getCurrentTool() == EditingTool::Tool::moveGate &&
+    //   EditingTool::getCurrentlyMoving() == this)
+    {
+        if(EditingTool::getCurrentlyMoving() == this)
+        {
+            qDebug() << "Rising";
+            EditingTool::clear();
+        }
+        m_isDragging = false;
+        m_mouseFollower->setEnabled(m_isDragging);
+        m_mousePressEvent->setEnabled(m_isDragging);
+    }
+
 }
 /*void Gate::onPinButtonFallingEdge()
 {

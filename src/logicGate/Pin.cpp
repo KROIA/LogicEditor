@@ -411,7 +411,37 @@ void Pin::updateGeomoetry()
 
 void Pin::onButtonFallingEdge()
 {
-    if(EditingTool::getCurrentTool() == EditingTool::Tool::addConnection)
+    if(EditingTool::getCurrentTool() == EditingTool::Tool::none)
+    {
+        EditingTool::setCurrentTool(EditingTool::Tool::addConnection);
+        Connection::currentlyConnecting = new Connection("Connection");
+        if(addOutputConnection(Connection::currentlyConnecting))
+        {
+            //  Connection::currentlyConnecting->set
+            //qDebug() << "Creaded new connection";
+        }
+        else
+        {
+            delete Connection::currentlyConnecting;
+            Connection::currentlyConnecting = nullptr;
+        }
+    }
+    else if(EditingTool::getCurrentTool() == EditingTool::addConnection)
+    {
+        if(setInputConnection(Connection::currentlyConnecting))
+        {
+            Connection::currentlyConnecting = nullptr;
+            EditingTool::setCurrentTool(EditingTool::Tool::none);
+        }
+        else
+        {
+            qDebug() << "can't add connection";
+        }
+
+    }
+    else
+        emit pinButtonFallingEdge();
+    /*if(EditingTool::getCurrentTool() == EditingTool::Tool::addConnection)
     {
         //qDebug() << "Pin::onButtonFallingEdge()";
         if(Connection::currentlyConnecting)
@@ -442,7 +472,7 @@ void Pin::onButtonFallingEdge()
         }
     }
     else
-        emit pinButtonFallingEdge();
+        emit pinButtonFallingEdge();*/
 }
 void Pin::onButtonDown()
 {

@@ -38,6 +38,8 @@ class MainWindow : public QMainWindow
         void onEscapePressed();
 
     private:
+        void createGate(Gate *gate);
+
         Ui::MainWindow *ui;
         EditorRibbon *m_ribbon;
         QSFML::Canvas *m_canvas;

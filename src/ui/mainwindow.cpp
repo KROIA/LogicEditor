@@ -81,6 +81,7 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::onEscapePressed);
     keyEvents->addComponent(m_escKey);
     m_canvas->addObject(keyEvents);
+    //m_canvas->addObject(EditingTool::getInstance());
 
 
 }
@@ -123,53 +124,27 @@ void MainWindow::onRemoveConnection()
 
 void MainWindow::onAddInputGate()
 {
-    EditingTool::clear();
-    InputGate *gate = new InputGate("Input");
-    gate->enableMouseDrag(true);
-    gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    createGate(new InputGate("Input"));
 }
 void MainWindow::onAddClock()
 {
-    EditingTool::clear();
-    Clock *gate = new Clock("Clock");
-    gate->setFrequency(2);
-    gate->enableMouseDrag(true);
-    gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    createGate(new Clock("Clock"));
 }
 void MainWindow::onAddAndGate()
 {
-    EditingTool::clear();
-    AndGate *gate = new AndGate("AndGate");
-    gate->setInputCount(2);
-    gate->enableMouseDrag(true);
-    gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    createGate(new AndGate("AndGate"));
 }
 void MainWindow::onAddOrGate()
 {
-    EditingTool::clear();
-    OrGate *gate = new OrGate("OrGate");
-    gate->enableMouseDrag(true);
-    gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    createGate(new OrGate("OrGate"));
 }
 void MainWindow::onAddXorGate()
 {
-    EditingTool::clear();
-    XorGate *gate = new XorGate("XorGate");
-    gate->enableMouseDrag(true);
-    gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    createGate(new XorGate("XorGate"));
 }
 void MainWindow::onAddNotGate()
 {
-    EditingTool::clear();
-    NotGate *gate = new NotGate("NotGate");
-    gate->enableMouseDrag(true);
-    gate->snapToMouse(true);
-    m_canvas->addObject(gate);
+    createGate(new NotGate("NotGate"));
 }
 
 void MainWindow::onRemoveGate()
@@ -179,4 +154,14 @@ void MainWindow::onRemoveGate()
 void MainWindow::onEscapePressed()
 {
     EditingTool::clear();
+}
+
+void MainWindow::createGate(Gate *gate)
+{
+    EditingTool::setCurrentTool(EditingTool::Tool::moveGate);
+    EditingTool::setCurrentlyMoving(gate);
+    //Gate *gate = new NotGate("NotGate");
+    gate->enableMouseDrag(true);
+    gate->snapToMouse(true);
+    m_canvas->addObject(gate);
 }

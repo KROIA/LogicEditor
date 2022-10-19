@@ -45,7 +45,8 @@ HEADERS += \
     $$inc/serialization/databaseID.h \
     $$inc/serialization/databaseObject.h \
     $$inc/utilities/sfSerializer.h \
-    $$inc/utilities/debug.h
+    $$inc/utilities/debug.h \
+    inc/utilities/forwardDeclaration.h
 
 
 SOURCES += \
