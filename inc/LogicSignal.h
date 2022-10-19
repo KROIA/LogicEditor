@@ -23,9 +23,11 @@ class LogicSignal : public QObject
 
         LogicSignal getInverted() const;
 
+
         void setValue(Digital signal);
         Digital getValue() const;
         const sf::Color &getColor() const;
+        static const sf::Color &getColor(Digital value);
 
         void setHighColor(const sf::Color &color);
         const sf::Color &getHighColor() const;

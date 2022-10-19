@@ -81,7 +81,7 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::onEscapePressed);
     keyEvents->addComponent(m_escKey);
     m_canvas->addObject(keyEvents);
-    //m_canvas->addObject(EditingTool::getInstance());
+    m_canvas->addObject(EditingTool::getInstance());
 
 
 }
@@ -162,6 +162,6 @@ void MainWindow::createGate(Gate *gate)
     EditingTool::setCurrentlyMoving(gate);
     //Gate *gate = new NotGate("NotGate");
     gate->enableMouseDrag(true);
-    gate->snapToMouse(true);
     m_canvas->addObject(gate);
+    gate->snapToMouse(true);
 }

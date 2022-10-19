@@ -89,7 +89,7 @@ void Connection::setStartPin(Pin *start)
 {
     m_startPin = start;
     if(m_startPin)
-        setSignal(m_startPin->getSignal());
+        setSignal(m_startPin->getOutputSignal());
 }
 void Connection::setEndPin(Pin *end)
 {

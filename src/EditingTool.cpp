@@ -1,5 +1,6 @@
 #include "EditingTool.h"
 #include "EditorRibbon.h"
+#include "Gate.h"
 
 EditingTool::Tool EditingTool::m_currentTool = Tool::none;
 EditingTool *EditingTool::m_instance = new EditingTool();
@@ -46,6 +47,11 @@ EditingTool::Tool EditingTool::getCurrentTool()
 void EditingTool::clear()
 {
     m_instance->m_nextTool = Tool::none;
+    if(m_instance->m_nextMovingGate)
+    {
+        m_instance->m_nextMovingGate->snapToMouse(false);
+    }
+    m_instance->m_nextMovingGate = nullptr;
     /*Tool oldTool = m_currentTool;
     m_currentTool = Tool::none;
     toolChangedInternal(oldTool, m_currentTool);*/

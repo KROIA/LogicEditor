@@ -7,16 +7,19 @@ LogicSignal::LogicSignal(Digital signal)
    // :   QObject()
 {
     m_signal = signal;
+    //m_inverted = false;
 }
 LogicSignal::LogicSignal(const LogicSignal &other)
    // :   QObject()
 {
     m_signal = other.m_signal;
+    //m_inverted = other.m_inverted;
 }
 
 const LogicSignal& LogicSignal::operator=(const LogicSignal &other)
 {
     m_signal = other.m_signal;
+  //  m_inverted = other.m_inverted;
     return *this;
 }
 const LogicSignal& LogicSignal::operator=(Digital signal)
@@ -25,12 +28,22 @@ const LogicSignal& LogicSignal::operator=(Digital signal)
     return *this;
 }
 
+/*void LogicSignal::setInverted(bool inverted)
+{
+    m_inverted = inverted;
+}
+bool LogicSignal::isInverted() const
+{
+    return m_inverted;
+}*/
 void LogicSignal::setValue(Digital signal)
 {
     m_signal = signal;
 }
 LogicSignal::Digital LogicSignal::getValue() const
 {
+    //if(m_inverted)
+    //    return (Digital)!(bool)m_signal;
     return m_signal;
 }
 LogicSignal LogicSignal::getInverted() const
@@ -39,7 +52,11 @@ LogicSignal LogicSignal::getInverted() const
 }
 const sf::Color &LogicSignal::getColor() const
 {
-    if(m_signal == Digital::high)
+    return getColor(m_signal);
+}
+const sf::Color &LogicSignal::getColor(Digital value)
+{
+    if(value == Digital::high)
         return m_highColor;
     return m_lowColor;
 }

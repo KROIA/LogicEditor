@@ -52,9 +52,11 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject, public ISeriali
         Orientation getOrientation() const;
 
         void setSignal(const LogicSignal &val);
-        const LogicSignal *getSignal() const;
+        const LogicSignal *getInputSignal();
+        const LogicSignal *getOutputSignal();
         void setValue(LogicSignal::Digital val);
-        LogicSignal::Digital getValue() const;
+        LogicSignal::Digital getInputValue();
+        LogicSignal::Digital getOutputValue();
 
         void setInverted(bool enable);
         bool isInverted() const;
@@ -72,6 +74,8 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject, public ISeriali
         bool read(const QJsonObject &reader) override;
         void postLoad() override;
 
+        void updateGeometry();
+
     signals:
         void pinButtonFallingEdge();
         void pinButtonDown();
@@ -88,16 +92,16 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject, public ISeriali
     protected:
 
     private:
-        void updateGeomoetry();
+
 
         Type m_type;
         Orientation m_orientation;
-        LogicSignal *m_value;
-        LogicSignal *m_originalValue;
+        LogicSignal *m_inputValue;
+        LogicSignal *m_outputValue;
         sf::Vector2f m_pos;
         sf::Vector2f m_size;
+        sf::Vector2f m_topLeft;
         size_t m_pinNr;
-
         bool m_isInverted;
 
         //static bool m_connectorToolActive;

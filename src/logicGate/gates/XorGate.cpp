@@ -21,7 +21,7 @@ void XorGate::update()
 
     // Process logic
     bool outValue = false;
-    if(inp[0]->getValue() != inp[1]->getValue())
+    if(inp[0]->getOutputValue() != inp[1]->getOutputValue())
         outValue = true;
     out[0]->setValue((LogicSignal::Digital)outValue);
 }

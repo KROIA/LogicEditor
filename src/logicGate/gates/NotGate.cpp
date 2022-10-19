@@ -24,7 +24,7 @@ void NotGate::update()
     // Process logic
     for(size_t i=0; i<smallest; ++i)
     {
-        out[i]->setValue((LogicSignal::Digital)!(bool)inp[i]->getValue());
+        out[i]->setValue((LogicSignal::Digital)!(bool)inp[i]->getOutputValue());
     }
 }
 void NotGate::setInputCount(size_t inputs)

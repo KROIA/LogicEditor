@@ -80,7 +80,7 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
         const std::vector<Pin*> &getInputPins() const;
         const std::vector<Pin*> &getOutputPins() const;
     private:
-        void updateGeomoetry();
+        void updateGeometry();
         void updatePosition();
 
         QSFML::Components::Button *m_button;
