@@ -1,5 +1,6 @@
 #include "Gate.h"
-
+#include "EditingTool.h"
+#include "VectorOperations.h"
 
 Gate::Gate(const Gate &other)
     :   QObject()
@@ -44,6 +45,9 @@ Gate::Gate(const std::string &name,
 
     enableMouseDrag(false);
 
+    m_minMovingDistance = 5;
+    setEditMode(true);
+
 }
 
 void Gate::update()
@@ -76,11 +80,34 @@ void  Gate::setCharacterSize(unsigned int size)
     m_symbolicText->setCharacterSize(size);
     updatePosition();
 }
+
 unsigned int  Gate::getCharacterSize() const
 {
     return m_symbolicText->getCharacterSize();
 }
 
+void Gate::setEditMode(bool enable)
+{
+    m_inEditMode = enable;
+    if(m_inEditMode)
+    {
+        m_mousePressEvent->setEnabled(true);
+
+    }
+    else
+    {
+        m_mousePressEvent->setEnabled(false);
+        snapToMouse(false);
+    }
+    for(size_t i=0; i<m_inputs.size(); ++i)
+        m_inputs[i]->setEditMode(enable);
+    for(size_t i=0; i<m_outputs.size(); ++i)
+        m_outputs[i]->setEditMode(enable);
+}
+bool Gate::isInEditMode() const
+{
+    return m_inEditMode;
+}
 void Gate::enableAutoSize(bool enable)
 {
     m_autoSize = enable;
@@ -100,7 +127,7 @@ float Gate::getAutoSizeInterval() const
 void Gate::setOrientation(Orientation orientation)
 {
     m_orientation = orientation;
-    updateGeomoetry();
+    updateGeometry();
 }
 Orientation Gate::getOrientation() const
 {
@@ -122,7 +149,7 @@ void Gate::setSize(const sf::Vector2f &size)
         m_size.x = -m_size.x;
     if(m_size.y < 0)
         m_size.y = -m_size.y;
-    updateGeomoetry();
+    updateGeometry();
 }
 const sf::Vector2f &Gate::getSize() const
 {
@@ -144,13 +171,20 @@ bool Gate::mouseDragEnabled() const
 }
 void Gate::snapToMouse(bool enable)
 {
-    enableMouseDrag(enable);
+    m_draggingIsEnabled |= enable;
     if(enable)
     {
+        setPosition(getMouseWorldPosition());
         m_isDragging = true;
         m_mouseFollower->setEnabled(m_isDragging);
         m_mousePressEvent->setEnabled(m_isDragging);
-    }    
+    }
+    else
+    {
+        m_isDragging = false;
+        m_mouseFollower->setEnabled(m_isDragging);
+        m_mousePressEvent->setEnabled(m_isDragging);
+    }
 }
 void Gate::setInputCount(size_t inputs)
 {
@@ -172,7 +206,7 @@ void Gate::setInputCount(size_t inputs)
         CanvasObject::addChild(pin);
         ISerializable::addChild(pin);
     }
-    updateGeomoetry();
+    updateGeometry();
 }
 size_t Gate::getInputCount() const
 {
@@ -198,7 +232,7 @@ void Gate::setOutputCount(size_t outputs)
         CanvasObject::addChild(pin);
         ISerializable::addChild(pin);
     }
-    updateGeomoetry();
+    updateGeometry();
 }
 size_t Gate::getOutputCount() const
 {
@@ -325,6 +359,11 @@ bool Gate::read(const QJsonObject &reader)
         QJsonObject pinObj = reader["INP_"+QString::number(i)].toObject();
         m_inputs[i]->read(pinObj);
     }
+    for(size_t i=0; i<m_outputs.size(); ++i)
+    {
+        QJsonObject pinObj = reader["OUT_"+QString::number(i)].toObject();
+        m_outputs[i]->read(pinObj);
+    }
 
     return success;
 }
@@ -335,14 +374,28 @@ void Gate::postLoad()
         m_inputs[i]->postLoad();
     }
 
-    updateGeomoetry();
+    updateGeometry();
 
 }
 
 void Gate::onGateDragTo(const sf::Vector2f &worldPos,
                         const sf::Vector2i &)
 {
-    setPosition(worldPos);
+
+    if(EditingTool::getCurrentTool() == EditingTool::Tool::none)
+    {
+        m_currentMovingVectorFromStart = m_currentMovingStart - worldPos;
+        float length = getVectorLength(m_currentMovingVectorFromStart);
+      //  qDebug() <<length;
+        if(length >= m_minMovingDistance)
+        {
+            EditingTool::setCurrentTool(EditingTool::Tool::moveGate);
+            EditingTool::setCurrentlyMoving(this);
+            m_isDragging = true;
+        }
+    }
+    if(EditingTool::getCurrentlyMoving() == this)
+        setPosition(worldPos);
 }
 void Gate::onRightMouseButtonPressed()
 {
@@ -351,16 +404,18 @@ void Gate::onRightMouseButtonPressed()
 
 void Gate::onButtonFallingEdge()
 {
+    if(!m_inEditMode) return;
     if(EditingTool::getCurrentTool() == EditingTool::Tool::removeGate)
     {
         deleteThis();
         return;
-    }
-    if(m_draggingIsEnabled)
+    }else if(EditingTool::getCurrentTool() != EditingTool::Tool::moveGate &&
+             m_draggingIsEnabled)
     {
-        m_isDragging = true;
-        m_mouseFollower->setEnabled(m_isDragging);
-        m_mousePressEvent->setEnabled(m_isDragging);
+        //qDebug() <<"Falling";
+        m_currentMovingStart = getPosition();
+        m_mouseFollower->setEnabled(true);
+        m_mousePressEvent->setEnabled(true);
     }
 }
 /*
@@ -370,9 +425,20 @@ void Gate::onButtonDown()
 }*/
 void Gate::onButtonRisingEdge()
 {
-    m_isDragging = false;
-    m_mouseFollower->setEnabled(m_isDragging);
-    m_mousePressEvent->setEnabled(m_isDragging);
+    if(!m_inEditMode) return;
+    //if(EditingTool::getCurrentTool() == EditingTool::Tool::moveGate &&
+    //   EditingTool::getCurrentlyMoving() == this)
+    {
+        if(EditingTool::getCurrentlyMoving() == this)
+        {
+
+            EditingTool::clear();
+        }
+        //qDebug() << "Rising";
+
+        snapToMouse(false);
+    }
+
 }
 /*void Gate::onPinButtonFallingEdge()
 {
@@ -399,7 +465,7 @@ const std::vector<Pin*> &Gate::getOutputPins() const
     return m_outputs;
 }
 
-void Gate::updateGeomoetry()
+void Gate::updateGeometry()
 {
     // Setze die Orientierung anhand der ausrichtung des Gates.
     Orientation inputOrientation = (Orientation)((m_orientation + 2) %4);
@@ -464,6 +530,7 @@ void Gate::updatePosition()
         }
     }
     m_symbolicText->setPosition(m_origin);
+    //qDebug() << "Pos: "<<m_symbolicText->getPosition().x << " "<<m_symbolicText->getPosition().y;
 
     for(size_t i=0; i<m_inputs.size(); ++i)
     {

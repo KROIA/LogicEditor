@@ -9,11 +9,12 @@ Pin::Pin(const std::string &name,
     , ISerializable()
 {
     m_size = sf::Vector2f(15,4);
-    m_value = new LogicSignal(LogicSignal::Digital::low);
-    m_originalValue = m_value;
+    m_inputValue = new LogicSignal(LogicSignal::Digital::low);
+    m_outputValue = new LogicSignal(LogicSignal::Digital::low);
     m_type = Type::input;
     m_orientation = Orientation::left;
     m_isInverted = false;
+    //m_isInverted = false;
     m_pinNr = 0;
 
     m_painter = new PinPainter("PinPainter");
@@ -38,12 +39,14 @@ Pin::Pin(const std::string &name,
 Pin::Pin(const Pin &other)
     : CanvasObject(other)
 {
+    m_inputConnection = nullptr;
     m_type = other.m_type;
     m_orientation = other.m_orientation;
-    m_value = new LogicSignal(other.m_value->getValue());
-    m_originalValue = m_value;
+    m_inputValue = new LogicSignal(LogicSignal::Digital::low);
+    m_outputValue = new LogicSignal(LogicSignal::Digital::low);
     m_size = other.m_size;
     m_isInverted = other.m_isInverted;
+    //m_isInverted = other.m_isInverted;
     m_pinNr = other.m_pinNr;
 
     m_painter = new PinPainter(*other.m_painter);
@@ -66,9 +69,9 @@ Pin::Pin(const Pin &other)
 
 Pin::~Pin()
 {
-    delete m_originalValue;
-
-    qDebug() << "delete Pin";
+    delete m_inputValue;
+    delete m_outputValue;
+    //qDebug() << "delete Pin";
     if(m_inputConnection)
         m_inputConnection->getParent()->deleteChild(m_inputConnection);
     m_inputConnection = nullptr;
@@ -96,10 +99,29 @@ size_t Pin::getPinNr() const
 {
     return m_pinNr;
 }
+void Pin::setEditMode(bool enable)
+{
+    m_inEditMode = enable;
+    if(m_inEditMode)
+    {
+        m_button->setEnabled(false);
+        m_inverterButton->setEnabled(false);
+    }
+    else
+    {
+        m_inverterButton->setEnabled(false);
+        m_button->setEnabled(false);
+    }
+}
+bool Pin::isInEditMode() const
+{
+    return m_inEditMode;
+}
+
 void Pin::setPosition(const sf::Vector2f &pos)
 {
     m_pos = pos;
-    updateGeomoetry();
+    updateGeometry();
 
 
 }
@@ -150,7 +172,7 @@ Pin::Type Pin::getType() const
 void Pin::setOrientation(Orientation orientation)
 {
     m_orientation = orientation;
-    updateGeomoetry();
+    updateGeometry();
 }
 Orientation Pin::getOrientation() const
 {
@@ -159,36 +181,50 @@ Orientation Pin::getOrientation() const
 
 void Pin::setSignal(const LogicSignal &val)
 {
+    /*m_inputValue->setValue(val.getValue());
     if(m_isInverted)
-        *m_value = val.getInverted();
+        m_outputValue->setValue(val.getInverted().getValue());
     else
-        *m_value = val;
+        m_outputValue->setValue(val.getValue());*/
+    setValue(val.getValue());
 }
-const LogicSignal *Pin::getSignal() const
+
+const LogicSignal *Pin::getInputSignal()
 {
     if(m_inputConnection)
-        return m_inputConnection->getSignal();
-    return m_value;
+    {
+        setValue(m_inputConnection->getSignal()->getValue());
+    }
+    return m_inputValue;
+}
+const LogicSignal *Pin::getOutputSignal()
+{
+    if(m_inputConnection)
+    {
+        setValue(m_inputConnection->getSignal()->getValue());
+    }
+    return m_outputValue;
 }
 void Pin::setValue(LogicSignal::Digital val)
 {
+    m_inputValue->setValue(val);
     if(m_isInverted)
-        *m_value = LogicSignal(val).getInverted();
+        m_outputValue->setValue(LogicSignal(val).getInverted().getValue());
     else
-        *m_value = val;
+        m_outputValue->setValue(val);
 }
-LogicSignal::Digital Pin::getValue() const
+LogicSignal::Digital Pin::getInputValue()
 {
-    if(m_inputConnection)
-        return m_inputConnection->getSignal()->getValue();
-    return m_value->getValue();
+    return getInputSignal()->getValue();
+}
+LogicSignal::Digital Pin::getOutputValue()
+{
+    return getOutputSignal()->getValue();
 }
 void Pin::setInverted(bool enable)
 {
-    if(m_isInverted == enable)
-        return;
     m_isInverted = enable;
-    *m_value = m_value->getInverted();
+    setValue(m_inputValue->getValue());
 }
 bool Pin::isInverted() const
 {
@@ -295,7 +331,7 @@ QJsonObject Pin::save() const
         {"pinNr", (int)m_pinNr},
      //   {"type" , m_type},
      //   {"orientation", m_orientation},
-        {"value", m_value->getValue()},
+        {"value", m_inputValue->getValue()},
      //   {"pos", sfVector2fToString(m_pos)},
      //   {"size", sfVector2fToString(m_size)},
         {"inverted", m_isInverted},
@@ -315,8 +351,10 @@ bool Pin::read(const QJsonObject &reader)
     m_pinNr = pinNr;
     int value;
     success &= extract(reader, value, "value");
-    m_value->setValue((LogicSignal::Digital)value);
     success &= extract(reader,m_isInverted, "inverted");
+    setValue((LogicSignal::Digital)value);
+
+
 
     int pinIndex = 0;
     success &= extract(reader,m__hasPinConnection, "hasInpCon");
@@ -367,43 +405,46 @@ void Pin::postLoad()
     }
 }
 
-void Pin::updateGeomoetry()
+void Pin::updateGeometry()
 {
+    float inverterButtonWidth = m_size.x / 3.f;
+    sf::Vector2f buttonSize(m_size.x-inverterButtonWidth, m_size.y);
     switch(m_orientation)
     {
         case Orientation::left:
         {
-            m_button->setSize(m_size);
+            m_button->setSize(buttonSize);
             m_button->setPos(m_pos - sf::Vector2f(m_size.x,m_size.y/2.f));
-            m_inverterButton->setSize(sf::Vector2f(m_size.x/2.f,m_size.y));
-            m_inverterButton->setPos(m_pos - sf::Vector2f(m_size.x/2.f,m_size.y/2.f));
+            m_topLeft = m_button->getPos();
+            m_inverterButton->setSize(sf::Vector2f(inverterButtonWidth,m_size.y));
+            m_inverterButton->setPos(m_pos - sf::Vector2f(inverterButtonWidth,m_size.y/2.f));
             break;
         }
         case Orientation::up:
         {
-            m_button->setSize(sf::Vector2f(m_size.y,m_size.x));
+            m_button->setSize(sf::Vector2f(buttonSize.y,buttonSize.x));
             m_button->setPos(m_pos - sf::Vector2f(m_size.y/2.f,m_size.x));
-            m_inverterButton->setSize(sf::Vector2f(m_size.y/2.f,m_size.x));
-            m_inverterButton->setPos(m_pos - sf::Vector2f(m_size.y/2.f,m_size.x/2.f));
-
+            m_topLeft = m_button->getPos();
+            m_inverterButton->setSize(sf::Vector2f(m_size.y, inverterButtonWidth));
+            m_inverterButton->setPos(m_pos - sf::Vector2f(m_size.y/2.f,inverterButtonWidth));
             break;
         }
         case Orientation::right:
         {
-            m_button->setSize(m_size);
-            m_button->setPos(m_pos - sf::Vector2f(0,m_size.y/2.f));
-            m_inverterButton->setSize(sf::Vector2f(m_size.x/2.f,m_size.y));
+            m_button->setSize(buttonSize);
+            m_button->setPos(m_pos + sf::Vector2f(inverterButtonWidth,-m_size.y/2.f));
+            m_topLeft = m_pos + sf::Vector2f(0,-m_size.y/2.f);
+            m_inverterButton->setSize(sf::Vector2f(inverterButtonWidth,m_size.y));
             m_inverterButton->setPos(m_pos - sf::Vector2f(0,m_size.y/2.f));
-
             break;
         }
         case Orientation::down:
         {
-            m_button->setSize(sf::Vector2f(m_size.y,m_size.x));
-            m_button->setPos(m_pos - sf::Vector2f(m_size.y/2.f,0));
-            m_inverterButton->setSize(sf::Vector2f(m_size.x/2.f,m_size.y));
-            m_inverterButton->setPos(m_pos - sf::Vector2f(m_size.x/2.f,0));
-
+            m_button->setSize(sf::Vector2f(buttonSize.y,buttonSize.x));
+            m_button->setPos(m_pos + sf::Vector2f(-m_size.y/2.f,inverterButtonWidth));
+            m_topLeft = m_pos + sf::Vector2f(-m_size.y/2.f,0);
+            m_inverterButton->setSize(sf::Vector2f(m_size.y, inverterButtonWidth));
+            m_inverterButton->setPos(m_pos - sf::Vector2f(m_size.y/2.f,0));
             break;
         }
     }
@@ -411,7 +452,26 @@ void Pin::updateGeomoetry()
 
 void Pin::onButtonFallingEdge()
 {
-    if(EditingTool::getCurrentTool() == EditingTool::Tool::addConnection)
+
+    if(EditingTool::getCurrentTool() == EditingTool::Tool::none &&
+        m_type == Type::output)
+    {
+        EditingTool::setCurrentTool(EditingTool::Tool::addConnection);
+        Connection::currentlyConnecting = new Connection("Connection");
+        if(addOutputConnection(Connection::currentlyConnecting))
+        {
+            //  Connection::currentlyConnecting->set
+            //qDebug() << "Creaded new connection";
+        }
+        else
+        {
+            delete Connection::currentlyConnecting;
+            Connection::currentlyConnecting = nullptr;
+        }
+    }
+    else
+        emit pinButtonFallingEdge();
+    /*if(EditingTool::getCurrentTool() == EditingTool::Tool::addConnection)
     {
         //qDebug() << "Pin::onButtonFallingEdge()";
         if(Connection::currentlyConnecting)
@@ -442,7 +502,7 @@ void Pin::onButtonFallingEdge()
         }
     }
     else
-        emit pinButtonFallingEdge();
+        emit pinButtonFallingEdge();*/
 }
 void Pin::onButtonDown()
 {
@@ -455,8 +515,18 @@ void Pin::onButtonDown()
 }
 void Pin::onButtonRisingEdge()
 {
-    if(EditingTool::getCurrentTool() == EditingTool::Tool::addConnection)
+    if(EditingTool::getCurrentTool() == EditingTool::addConnection &&
+       Connection::currentlyConnecting->getStartPin() != this)
     {
+        if(setInputConnection(Connection::currentlyConnecting))
+        {
+            Connection::currentlyConnecting = nullptr;
+            EditingTool::setCurrentTool(EditingTool::Tool::none);
+        }
+        else
+        {
+            qDebug() << "can't add connection";
+        }
 
     }
     else
@@ -464,19 +534,22 @@ void Pin::onButtonRisingEdge()
 }
 void Pin::onInverterButtonFallingEdge()
 {
-    if(EditingTool::getCurrentTool() != EditingTool::addConnection)
+    if(EditingTool::getCurrentTool() == EditingTool::none)
         setInverted(!isInverted());
 }
 
 void Pin::onConnectionDeleted()
 {
-    Connection *con = qobject_cast<Connection*>(QObject::sender());
+    //qDebug() << "onConnectionDeleted";
+    Connection *con = static_cast<Connection*>(QObject::sender());
     if(!con) return;
     if(con == m_inputConnection)
     {
         m_inputConnection = nullptr;
+       // qDebug() << "onConnectionDeleted 2";
         return;
     }
+    //qDebug() << "onConnectionDeleted 3";
     for(size_t i=0; i<m_outputConnections.size(); ++i)
     {
         if(con == m_outputConnections[i])
@@ -503,30 +576,61 @@ void Pin::PinPainter::draw(sf::RenderTarget& target,
 
     sf::RectangleShape rectangle;
 
+    sf::RectangleShape pinSection;
+    sf::RectangleShape inverterSection;
 
 
-    sf::Vector2f size = m_pin->m_button->getSize();
-    rectangle.setPosition(m_pin->m_button->TL());
+
+    sf::Vector2f size = m_pin->m_size;
+    rectangle.setPosition(m_pin->m_topLeft);
     //size.x -= outlineThichness;
     //size.y -= outlineThichness;
-    rectangle.setSize(size);
+    if(m_pin->m_orientation == Orientation::down ||
+       m_pin->m_orientation == Orientation::up)
+        rectangle.setSize(sf::Vector2f(size.y,size.x));
+    else
+        rectangle.setSize(size);
 
-    sf::Color col = m_pin->getSignal()->getColor();
-    sf::Color outlineColor((float)col.r * colorFac,
-                           (float)col.g * colorFac,
-                           (float)col.b * colorFac);
-    rectangle.setFillColor(col);
+    sf::Color pinColor;
+    sf::Color inverterColor;
+    if(m_pin->getType() == Pin::Type::input)
+    {
+        pinColor = m_pin->getInputSignal()->getColor();
+        inverterColor = m_pin->getOutputSignal()->getColor();
+    }
+    else
+    {
+        pinColor = m_pin->getOutputSignal()->getColor();
+        inverterColor = m_pin->getInputSignal()->getColor();
+    }
+    sf::Color outlineColor((float)pinColor.r * colorFac,
+                           (float)pinColor.g * colorFac,
+                           (float)pinColor.b * colorFac);
+    rectangle.setFillColor(pinColor);
     rectangle.setOutlineThickness(outlineThichness);
     rectangle.setOutlineColor(outlineColor);
 
+    inverterSection.setPosition(m_pin->m_inverterButton->getPos());
+    inverterSection.setSize(m_pin->m_inverterButton->getSize());
+    inverterSection.setFillColor(sf::Color::Green);
+
+    pinSection.setPosition(m_pin->m_button->TL());
+    pinSection.setSize(m_pin->m_button->getSize());
+    pinSection.setFillColor(sf::Color::Blue);
+
     target.draw(rectangle);
+    target.draw(pinSection);
+    target.draw(inverterSection);
 
     if(m_pin->m_isInverted)
     {
         float radius = size.y*0.6f;
+        sf::Color outlineColor((float)inverterColor.r * colorFac,
+                               (float)inverterColor.g * colorFac,
+                               (float)inverterColor.b * colorFac);
         sf::CircleShape invertedShape(radius);
         invertedShape.setOrigin(radius,radius);
-        invertedShape.setFillColor(sf::Color(80,80,80));
+        invertedShape.setFillColor(inverterColor);
         invertedShape.setOutlineThickness(outlineThichness);
         invertedShape.setOutlineColor(outlineColor);
         invertedShape.setPosition(m_pin->getPosition());

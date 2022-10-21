@@ -45,7 +45,11 @@ HEADERS += \
     $$inc/serialization/databaseID.h \
     $$inc/serialization/databaseObject.h \
     $$inc/utilities/sfSerializer.h \
-    $$inc/utilities/debug.h
+    $$inc/utilities/debug.h \
+    inc/logicGate/Block.h \
+    inc/logicGate/gates/BlockGate.h \
+    inc/logicGate/gates/BlockPin.h \
+    inc/utilities/forwardDeclaration.h
 
 
 SOURCES += \
@@ -68,6 +72,9 @@ SOURCES += \
     $$src/serialization/databaseID.cpp \
     $$src/serialization/databaseObject.cpp \
     $$src/utilities/debug.cpp \
+    src/logicGate/Block.cpp \
+    src/logicGate/gates/BlockGate.cpp \
+    src/logicGate/gates/BlockPin.cpp \
     src/utilities/sfSerializer.cpp
 
 

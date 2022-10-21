@@ -30,6 +30,7 @@ void RIBBON_CLASS_NAME::buildButtons()
     RIBBON_CALL_SETUP(EditButtons);
     RIBBON_CALL_SETUP(ConnectionButtons);
     RIBBON_CALL_SETUP(AddGateButtons);
+    RIBBON_CALL_SETUP(BlockButtons);
     // RIBBON_CALL_SETUP(NEW_BUTTON_STRUCT_NAME);
 }
 
@@ -98,6 +99,50 @@ RIBBON_SETUP_FUNC_IMPL(AddGateButtons)
                                                                       resourcePath("Gates/NotGate"), true, tab, group);
     RIBBON_BUTTONS(AddGateButtons).remove = buttonFactory<QToolButton>("Löschen","Gatter löschem",
                                                                       resourcePath("delete"), true, tab, group);
+}
+
+RIBBON_SETUP_FUNC_IMPL(BlockButtons)
+{
+    string tab   = "Block Editor";    // define in which tab the buttons shuld be located
+    string group = "Block";    // define the group in the tab for the buttons
+
+    addTab(m_qIconBasePath+"Gates/Block"+m_externIconsExtention, tab);
+
+   // RIBBON_BUTTONS(ConnectionButtons).load = buttonFactory<QToolButton>("Laden","Lädt",
+   //                                                 resourcePath("refresh"), true, tab, group);
+
+   // RIBBON_BUTTONS(ConnectionButtons).save = buttonFactory<QToolButton>("Speichern","Speichert die Software Option Datenbank",
+   //                                                 resourcePath("floppy-disk"), true, tab, group);
+
+    RIBBON_BUTTONS(BlockButtons).load = buttonFactory<QToolButton>("Laden","Block laden",
+                                                                   resourcePath("refresh"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).save = buttonFactory<QToolButton>("Speichern","Block abspeichern",
+                                                                   resourcePath("floppy-disk"), true, tab, group);
+
+
+    RIBBON_BUTTONS(BlockButtons).createBlock = buttonFactory<QToolButton>("Neu","Block erstellen",
+                                                                   resourcePath("Gates/Block-create"), true, tab, group);
+
+    group = "Gatter einfügen";    // define the group in the tab for the buttons
+
+    RIBBON_BUTTONS(BlockButtons).addInputPin = buttonFactory<QToolButton>("","Neuer Eingang erstellen.",
+                                                                      resourcePath("Gates/Pin-input"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).addOutputPin = buttonFactory<QToolButton>("","Neuer Ausgang erstellen.",
+                                                                      resourcePath("Gates/Pin-output"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).addClock = buttonFactory<QToolButton>("","Neues Tacktsignal erstellen.",
+                                                                      resourcePath("Gates/Clock"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).addInputGate = buttonFactory<QToolButton>("","Neue Signalquelle erstellen. Kann von Hand geschaltet werden.",
+                                                                      resourcePath("Gates/InGate"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).addAndGate = buttonFactory<QToolButton>("","Neues UND Gatter erstellen",
+                                                                      resourcePath("Gates/AndGate"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).addOrGate = buttonFactory<QToolButton>("","Neues ODER Gatter erstellen",
+                                                                      resourcePath("Gates/OrGate"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).addXorGate = buttonFactory<QToolButton>("","Neues XOR Gatter erstellen",
+                                                                      resourcePath("Gates/XorGate"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).addNotGate = buttonFactory<QToolButton>("","Neues NICHT Gatter erstellen",
+                                                                      resourcePath("Gates/NotGate"), true, tab, group);
+    RIBBON_BUTTONS(BlockButtons).remove = buttonFactory<QToolButton>("Löschen","Gatter löschem",
+                                                                          resourcePath("delete"), true, tab, group);
 }
 
 // NEW_BUTTONS [4]:

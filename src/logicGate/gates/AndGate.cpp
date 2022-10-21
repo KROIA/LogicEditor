@@ -23,7 +23,7 @@ void AndGate::update()
     bool outValue = true;
     for(size_t i=0; i<inp.size(); ++i)
     {
-        outValue &= inp[i]->getValue();
+        outValue &= inp[i]->getOutputValue();
     }
     out[0]->setValue((LogicSignal::Digital)outValue);
 }

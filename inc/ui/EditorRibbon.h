@@ -111,6 +111,26 @@ struct AddGateButtons
     QToolButton *remove;
 };
 
+struct BlockButtons
+{
+    QToolButton *save;
+    QToolButton *load;
+
+    QToolButton *createBlock;
+
+    QToolButton *addInputPin;
+    QToolButton *addOutputPin;
+    QToolButton *addInputGate;
+    QToolButton *addClock;
+    QToolButton *addAndGate;
+    QToolButton *addOrGate;
+    QToolButton *addXorGate;
+    QToolButton *addNotGate;
+
+    QToolButton *remove;
+
+};
+
 
 // End of button structs
 
@@ -140,6 +160,7 @@ class RIBBON_CLASS_NAME : public QWidget
         RIBBON_IMPLEMENT_STRUCT(EditButtons);
         RIBBON_IMPLEMENT_STRUCT(ConnectionButtons);
         RIBBON_IMPLEMENT_STRUCT(AddGateButtons);
+        RIBBON_IMPLEMENT_STRUCT(BlockButtons);
 
 
         static void selectButton(QToolButton *button);

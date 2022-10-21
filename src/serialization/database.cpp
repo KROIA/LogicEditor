@@ -3,6 +3,9 @@
 #include <QJsonArray>
 #include <QFile>
 
+
+std::unordered_map<std::string, ISerializable*> Database::m_saveableObjectTypes;
+
 Database::Database()
 {
 
@@ -51,7 +54,7 @@ bool Database::save(const std::string &jsonFile) const
     for (auto& it: m_objects)
     {
         QJsonObject obj = it.second->getObject()->save();
-        obj[DatabaseID::key_id.c_str()] = it.second->getID().getID().c_str();
+        //obj[DatabaseID::key_id.c_str()] = it.second->getID().getID().c_str();
         writer.push_back(obj);
     }
 
@@ -86,7 +89,11 @@ bool Database::addObject(ISerializable* obj)
         WARNING("Objekt (Name = \""<<obj->className().c_str()<<"\", ID = \""<<obj->getID().c_str() <<"\") bereits vorhanden"<<"\n");
         return false;
     }
-    DatabaseID id(DatabaseID::generateRandomID());
+    DatabaseID id;
+    if(obj->getID() != "")
+        id.setID(obj->getID());
+    else
+        id.setID(DatabaseID::generateRandomID());
     while(objectExists(id.getID()))
         id.setID(DatabaseID::generateRandomID());
 
@@ -113,6 +120,7 @@ bool Database::removeObject(ISerializable* obj)
     if(dbObj)
     {
         m_objects.erase(dbObj->getID().getID());
+        dbObj->setObjectNullptr();
         delete dbObj;
         return true;
     }
@@ -132,6 +140,7 @@ bool Database::removeObject(DatabaseObject *dbObj)
   if(found)
   {
     m_objects.erase(dbObj->getID().getID());
+    dbObj->setObjectNullptr();
     delete dbObj;
     return true;
   }
@@ -144,8 +153,16 @@ bool Database::removeObject(const std::string &id)
         return false;
     DatabaseObject *dbObj = findit->second;
     m_objects.erase(dbObj->getID().getID());
+    dbObj->setObjectNullptr();
     delete dbObj;
     return true;
+}
+void Database::removeObjects(const std::vector<ISerializable*> &objs)
+{
+    for(size_t i=0; i<objs.size(); ++i)
+    {
+        removeObject(objs[i]);
+    }
 }
 
 bool Database::objectExists(ISerializable* obj) const
@@ -209,14 +226,15 @@ void Database::instantiateDatabase(const QJsonArray &objs)
     for(int i=0; i<objs.count(); ++i)
     {
         QJsonObject obj = objs[i].toObject();
-        instantiateObject(obj);
+        instantiateAddObject(obj);
     }
     for (auto& it: m_objects)
     {
         it.second->getObject()->postLoad();
     }
 }
-void Database::instantiateObject(const QJsonObject &obj)
+
+ISerializable *Database::getInstantiated(const QJsonObject &obj)
 {
     std::string objType = obj[ISerializable::key_objectType.c_str()].toString("none").toStdString();
 
@@ -224,24 +242,30 @@ void Database::instantiateObject(const QJsonObject &obj)
     if(findit == m_saveableObjectTypes.end())
     {
         WARNING("Kann Objekt Type: \""<<objType.c_str()<<"\" keinem definierten speicherbaren Objekt zuordnen"<<"\n");
-        return;
+        return nullptr;
     }
     else
     {
         ISerializable *instance = findit->second->clone(obj);
-        if(instance)
-        {
-            DatabaseID id(obj[DatabaseID::key_id.c_str()].toString().toStdString());
+        return instance;
+    }
+}
+void Database::instantiateAddObject(const QJsonObject &obj)
+{
+    ISerializable *instance = getInstantiated(obj);
 
-            //addObject(instance);
-            if(!objectExists(id.getID()))
-                addObjectInternal(instance,id);
-            else
-            {
-                ISerializable *other = m_objects[id.getID()]->getObject();
-                WARNING("Kann Objekt Type: \""<<objType.c_str()<<"\" ID: \""<< id.getID().c_str()
-                        <<"\" nicht laden. Objekt Type: \""<<other->className().c_str()<<"\" hat die gleiche ID\n");
-            }
+    if(instance)
+    {
+        DatabaseID id(obj[DatabaseID::key_id.c_str()].toString().toStdString());
+
+        if(!objectExists(id.getID()))
+            addObjectInternal(instance,id);
+        else
+        {
+            std::string objType = obj[ISerializable::key_objectType.c_str()].toString("none").toStdString();
+            ISerializable *other = m_objects[id.getID()]->getObject();
+            WARNING("Kann Objekt Type: \""<<objType.c_str()<<"\" ID: \""<< id.getID().c_str()
+                    <<"\" nicht laden. Objekt Type: \""<<other->className().c_str()<<"\" hat die gleiche ID\n");
         }
     }
 }
@@ -250,6 +274,7 @@ void Database::clear(bool deleteIt)
     for (auto& it: m_objects) {
         if(!deleteIt)
             it.second->setObjectNullptr();
+        it.second->setObjectNullptr();
         delete it.second;
     }
     m_objects.clear();

@@ -35,13 +35,12 @@
      </widget>
     </item>
     <item>
-     <widget class="QFrame" name="canvasDisplay">
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
+     <widget class="QStackedWidget" name="pages">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
+      <widget class="QWidget" name="main_page"/>
+      <widget class="QWidget" name="blockEditor_page"/>
      </widget>
     </item>
    </layout>
