@@ -65,26 +65,31 @@ void EditingTool::toolChangedInternal(Tool oldTool, Tool newTool)
 
     ConnectionButtons conBut = EditorRibbon::getConnectionButtons();
     AddGateButtons addGB = EditorRibbon::getAddGateButtons();
+    BlockButtons blockB = EditorRibbon::getBlockButtons();
     if(newTool == Tool::addConnection)
     {
         EditorRibbon::selectButton(conBut.addConnection);
         EditorRibbon::deselectButton(conBut.removeConnection);
         EditorRibbon::deselectButton(addGB.remove);
+        EditorRibbon::deselectButton(blockB.remove);
     }else if(newTool == Tool::removeConnection)
     {
         EditorRibbon::selectButton(conBut.removeConnection);
         EditorRibbon::deselectButton(conBut.addConnection);
         EditorRibbon::deselectButton(addGB.remove);
+        EditorRibbon::deselectButton(blockB.remove);
     }else if(newTool == Tool::removeGate)
     {
         EditorRibbon::deselectButton(conBut.addConnection);
         EditorRibbon::deselectButton(conBut.removeConnection);
         EditorRibbon::selectButton(addGB.remove);
+        EditorRibbon::selectButton(blockB.remove);
     }else
     {
         EditorRibbon::deselectButton(conBut.addConnection);
         EditorRibbon::deselectButton(conBut.removeConnection);
         EditorRibbon::deselectButton(addGB.remove);
+        EditorRibbon::deselectButton(blockB.remove);
     }
 
 

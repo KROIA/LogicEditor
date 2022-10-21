@@ -4,9 +4,10 @@
 #include <QMainWindow>
 #include "EditorRibbon.h"
 #include "Canvas.h"
-#include "EditingTool.h"
+//#include "EditingTool.h"
 #include "KeyPressEvent.h"
 #include "database.h"
+#include "LogicGates.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,6 +22,8 @@ class MainWindow : public QMainWindow
         ~MainWindow();
 
     private slots:
+        void onRibbonTabChanged(int index);
+
         void onLoad();
         void onSave();
 
@@ -37,12 +40,31 @@ class MainWindow : public QMainWindow
 
         void onEscapePressed();
 
+        void onBlockLoad();
+        void onBlockSave();
+        void onCreateNewBlock();
+
+        void onBlockAddBlockPinInp();
+        void onBlockAddBlockPinOut();
+        void onBlockAddInputGate();
+        void onBlockAddClock();
+        void onBlockAddAndGate();
+        void onBlockAddOrGate();
+        void onBlockAddXorGate();
+        void onBlockAddNotGate();
+
     private:
         void createGate(Gate *gate);
+        void createBlockGate(Gate *gate);
+
+        void createDefaultEnviroment(QSFML::Canvas *canvas);
 
         Ui::MainWindow *ui;
         EditorRibbon *m_ribbon;
         QSFML::Canvas *m_canvas;
+        QSFML::Canvas *m_blockCanvas;
+        Block *m_currentEditingBlock;
+
         Database *m_database;
 
         QSFML::Components::KeyPressEvent *m_escKey;

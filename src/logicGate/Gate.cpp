@@ -46,6 +46,7 @@ Gate::Gate(const std::string &name,
     enableMouseDrag(false);
 
     m_minMovingDistance = 5;
+    setEditMode(true);
 
 }
 
@@ -79,11 +80,34 @@ void  Gate::setCharacterSize(unsigned int size)
     m_symbolicText->setCharacterSize(size);
     updatePosition();
 }
+
 unsigned int  Gate::getCharacterSize() const
 {
     return m_symbolicText->getCharacterSize();
 }
 
+void Gate::setEditMode(bool enable)
+{
+    m_inEditMode = enable;
+    if(m_inEditMode)
+    {
+        m_mousePressEvent->setEnabled(true);
+
+    }
+    else
+    {
+        m_mousePressEvent->setEnabled(false);
+        snapToMouse(false);
+    }
+    for(size_t i=0; i<m_inputs.size(); ++i)
+        m_inputs[i]->setEditMode(enable);
+    for(size_t i=0; i<m_outputs.size(); ++i)
+        m_outputs[i]->setEditMode(enable);
+}
+bool Gate::isInEditMode() const
+{
+    return m_inEditMode;
+}
 void Gate::enableAutoSize(bool enable)
 {
     m_autoSize = enable;
@@ -380,6 +404,7 @@ void Gate::onRightMouseButtonPressed()
 
 void Gate::onButtonFallingEdge()
 {
+    if(!m_inEditMode) return;
     if(EditingTool::getCurrentTool() == EditingTool::Tool::removeGate)
     {
         deleteThis();
@@ -400,6 +425,7 @@ void Gate::onButtonDown()
 }*/
 void Gate::onButtonRisingEdge()
 {
+    if(!m_inEditMode) return;
     //if(EditingTool::getCurrentTool() == EditingTool::Tool::moveGate &&
     //   EditingTool::getCurrentlyMoving() == this)
     {

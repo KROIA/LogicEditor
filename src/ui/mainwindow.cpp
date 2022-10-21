@@ -4,7 +4,7 @@
 #include "CameraController.h"
 #include "BackgroundGrid.h"
 
-#include "LogicGates.h"
+
 
 DATABASE_USE_OBJECT(Gate)
 DATABASE_USE_OBJECT(AndGate)
@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     m_ribbon = new EditorRibbon(ui->ribbonTabWidget);
+    connect(m_ribbon, &EditorRibbon::ribbonTabChanged, this, &MainWindow::onRibbonTabChanged);
+
     EditButtons editButt = m_ribbon->getEditButtons();
     connect(editButt.load, &QToolButton::clicked, this, &MainWindow::onLoad);
     connect(editButt.save, &QToolButton::clicked, this, &MainWindow::onSave);
@@ -37,24 +39,39 @@ MainWindow::MainWindow(QWidget *parent)
     connect(addGateButt.addNotGate, &QToolButton::clicked, this, &MainWindow::onAddNotGate);
     connect(addGateButt.remove, &QToolButton::clicked, this, &MainWindow::onRemoveGate);
 
+    BlockButtons blockButt = m_ribbon->getBlockButtons();
+    connect(blockButt.load, &QToolButton::clicked, this, &MainWindow::onBlockLoad);
+    connect(blockButt.save, &QToolButton::clicked, this, &MainWindow::onBlockSave);
+    connect(blockButt.createBlock, &QToolButton::clicked, this, &MainWindow::onCreateNewBlock);
+    connect(blockButt.addInputPin, &QToolButton::clicked, this, &MainWindow::onBlockAddBlockPinInp);
+    connect(blockButt.addOutputPin, &QToolButton::clicked, this, &MainWindow::onBlockAddBlockPinOut);
+    connect(blockButt.addInputGate, &QToolButton::clicked, this, &MainWindow::onBlockAddInputGate);
+    connect(blockButt.addClock, &QToolButton::clicked, this, &MainWindow::onBlockAddClock);
+    connect(blockButt.addAndGate, &QToolButton::clicked, this, &MainWindow::onBlockAddAndGate);
+    connect(blockButt.addOrGate, &QToolButton::clicked, this, &MainWindow::onBlockAddOrGate);
+    connect(blockButt.addXorGate, &QToolButton::clicked, this, &MainWindow::onBlockAddXorGate);
+    connect(blockButt.addNotGate, &QToolButton::clicked, this, &MainWindow::onBlockAddNotGate);
+    connect(blockButt.remove, &QToolButton::clicked, this, &MainWindow::onRemoveGate);
+    m_currentEditingBlock = nullptr;
+
     QSFML::CanvasSettings settings;
 
-    m_canvas = new QSFML::Canvas(ui->canvasDisplay,settings);
+    m_canvas = new QSFML::Canvas(ui->main_page, settings);
+    m_blockCanvas = new QSFML::Canvas(ui->blockEditor_page, settings);
 
-    QSFML::Objects::CameraController *cam  = new QSFML::Objects::CameraController("cam");
-    QSFML::Objects::BackgroundGrid   *grid = new QSFML::Objects::BackgroundGrid("grid");
-    m_canvas->addObject(grid);
-    m_canvas->addObject(cam);
-    cam->setDragButton(sf::Mouse::Button::Middle);
+    createDefaultEnviroment(m_canvas);
+    createDefaultEnviroment(m_blockCanvas);
 
     m_database = new Database();
-    m_database->defineSaveableObject<Gate>();
-    m_database->defineSaveableObject<AndGate>();
-    m_database->defineSaveableObject<OrGate>();
-    m_database->defineSaveableObject<XorGate>();
-    m_database->defineSaveableObject<NotGate>();
-    m_database->defineSaveableObject<Clock>();
-    m_database->defineSaveableObject<InputGate>();
+    Database::defineSaveableObject<Gate>();
+    Database::defineSaveableObject<AndGate>();
+    Database::defineSaveableObject<OrGate>();
+    Database::defineSaveableObject<XorGate>();
+    Database::defineSaveableObject<NotGate>();
+    Database::defineSaveableObject<Clock>();
+    Database::defineSaveableObject<InputGate>();
+    Database::defineSaveableObject<Block>();
+    Database::defineSaveableObject<BlockPin>();
 
     //Pin *pin = new Pin("MyPin");
     //m_canvas->addObject(pin);
@@ -75,13 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
    //m_canvas->addObject(gate2);
 
 
-    QSFML::Objects::CanvasObject *keyEvents = new QSFML::Objects::CanvasObject("KeyEvents");
-    m_escKey = new QSFML::Components::KeyPressEvent("Esc Key",sf::Keyboard::Key::Escape);
-    connect(m_escKey, &QSFML::Components::KeyPressEvent::fallingEdge,
-            this, &MainWindow::onEscapePressed);
-    keyEvents->addComponent(m_escKey);
-    m_canvas->addObject(keyEvents);
-    m_canvas->addObject(EditingTool::getInstance());
+
 
 
 }
@@ -89,6 +100,24 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+
+void MainWindow::onRibbonTabChanged(int index)
+{
+    switch(index)
+    {
+        case 0:
+        {
+            ui->pages->setCurrentIndex(0);
+            break;
+        }
+        case 1:
+        {
+            ui->pages->setCurrentIndex(1);
+            break;
+        }
+    }
 }
 
 void MainWindow::onLoad()
@@ -156,6 +185,73 @@ void MainWindow::onEscapePressed()
     EditingTool::clear();
 }
 
+void MainWindow::onBlockLoad()
+{
+
+}
+void MainWindow::onBlockSave()
+{
+    if(!m_currentEditingBlock)
+    {
+        qDebug() << "Bo Block to save";
+        return;
+    }
+    Database database;
+    m_currentEditingBlock->generateBlock();
+    database.addObject(m_currentEditingBlock);
+
+    database.save(m_currentEditingBlock->getName()+".json");
+   // database.removeObjects(database.getObjects());
+}
+void MainWindow::onCreateNewBlock()
+{
+    if(m_currentEditingBlock)
+    {
+        createDefaultEnviroment(m_blockCanvas);
+        m_currentEditingBlock = nullptr;
+    }
+    m_currentEditingBlock = new Block("Block");
+    m_blockCanvas->addObject(m_currentEditingBlock);
+    m_currentEditingBlock->setEditMode(true);
+}
+
+void MainWindow::onBlockAddBlockPinInp()
+{
+    BlockPin *pin = new BlockPin("Inp");
+    pin->setType(Pin::Type::input);
+    createBlockGate(pin);
+}
+void MainWindow::onBlockAddBlockPinOut()
+{
+    BlockPin *pin = new BlockPin("Out");
+    pin->setType(Pin::Type::output);
+    createBlockGate(pin);
+}
+void MainWindow::onBlockAddInputGate()
+{
+    createBlockGate(new InputGate("Input"));
+}
+void MainWindow::onBlockAddClock()
+{
+    createBlockGate(new Clock("Clock"));
+}
+void MainWindow::onBlockAddAndGate()
+{
+    createBlockGate(new AndGate("AndGate"));
+}
+void MainWindow::onBlockAddOrGate()
+{
+    createBlockGate(new OrGate("OrGate"));
+}
+void MainWindow::onBlockAddXorGate()
+{
+    createBlockGate(new XorGate("XorGate"));
+}
+void MainWindow::onBlockAddNotGate()
+{
+    createBlockGate(new NotGate("NotGate"));
+}
+
 void MainWindow::createGate(Gate *gate)
 {
     EditingTool::setCurrentTool(EditingTool::Tool::moveGate);
@@ -164,4 +260,39 @@ void MainWindow::createGate(Gate *gate)
     gate->enableMouseDrag(true);
     m_canvas->addObject(gate);
     gate->snapToMouse(true);
+}
+void MainWindow::createBlockGate(Gate *gate)
+{
+    if(!m_currentEditingBlock)
+    {
+        delete gate;
+        return;
+    }
+
+    EditingTool::setCurrentTool(EditingTool::Tool::moveGate);
+    EditingTool::setCurrentlyMoving(gate);
+    gate->enableMouseDrag(true);
+    m_currentEditingBlock->addGate(gate);
+    gate->snapToMouse(true);
+}
+
+void MainWindow::createDefaultEnviroment(QSFML::Canvas *canvas)
+{
+    if(!canvas) return;
+    canvas->removeObject(EditingTool::getInstance());
+    canvas->deleteObject(canvas->getObjects());
+
+    QSFML::Objects::CameraController *cam  = new QSFML::Objects::CameraController("cam");
+    QSFML::Objects::BackgroundGrid   *grid = new QSFML::Objects::BackgroundGrid("grid");
+    canvas->addObject(grid);
+    canvas->addObject(cam);
+    cam->setDragButton(sf::Mouse::Button::Middle);
+
+    QSFML::Objects::CanvasObject *keyEvents = new QSFML::Objects::CanvasObject("KeyEvents");
+    m_escKey = new QSFML::Components::KeyPressEvent("Esc Key",sf::Keyboard::Key::Escape);
+    connect(m_escKey, &QSFML::Components::KeyPressEvent::fallingEdge,
+            this, &MainWindow::onEscapePressed);
+    keyEvents->addComponent(m_escKey);
+    canvas->addObject(keyEvents);
+    canvas->addObject(EditingTool::getInstance());
 }

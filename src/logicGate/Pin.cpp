@@ -99,6 +99,25 @@ size_t Pin::getPinNr() const
 {
     return m_pinNr;
 }
+void Pin::setEditMode(bool enable)
+{
+    m_inEditMode = enable;
+    if(m_inEditMode)
+    {
+        m_button->setEnabled(false);
+        m_inverterButton->setEnabled(false);
+    }
+    else
+    {
+        m_inverterButton->setEnabled(false);
+        m_button->setEnabled(false);
+    }
+}
+bool Pin::isInEditMode() const
+{
+    return m_inEditMode;
+}
+
 void Pin::setPosition(const sf::Vector2f &pos)
 {
     m_pos = pos;
@@ -515,7 +534,7 @@ void Pin::onButtonRisingEdge()
 }
 void Pin::onInverterButtonFallingEdge()
 {
-    if(EditingTool::getCurrentTool() != EditingTool::addConnection)
+    if(EditingTool::getCurrentTool() == EditingTool::none)
         setInverted(!isInverted());
 }
 

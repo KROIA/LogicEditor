@@ -6,3 +6,7 @@
 #include "NotGate.h"
 #include "Clock.h"
 #include "InputGate.h"
+#include "BlockPin.h"
+#include "Block.h"
+
+

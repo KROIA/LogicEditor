@@ -11,5 +11,9 @@
         <file>icons/delete.png</file>
         <file>icons/floppy-disk.png</file>
         <file>icons/refresh.png</file>
+        <file>icons/Gates/Block-create.png</file>
+        <file>icons/Gates/Block.png</file>
+        <file>icons/Gates/Pin-input.png</file>
+        <file>icons/Gates/Pin-output.png</file>
     </qresource>
 </RCC>

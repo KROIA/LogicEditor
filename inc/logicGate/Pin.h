@@ -43,6 +43,9 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject, public ISeriali
         void setPinNr(size_t nr);
         size_t getPinNr() const;
 
+        void setEditMode(bool enable);
+        bool isInEditMode() const;
+
         void setPosition(const sf::Vector2f &pos);
         const sf::Vector2f &getPosition() const;
         sf::Vector2f getConnectionAnchorPoint() const;
@@ -103,6 +106,7 @@ class Pin : public QObject, public QSFML::Objects::CanvasObject, public ISeriali
         sf::Vector2f m_topLeft;
         size_t m_pinNr;
         bool m_isInverted;
+        bool m_inEditMode;
 
         //static bool m_connectorToolActive;
         Connection *m_inputConnection;

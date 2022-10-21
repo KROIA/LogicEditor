@@ -24,7 +24,8 @@ class Database
         Database();
         ~Database();
         template<typename T>
-        bool defineSaveableObject();
+        static bool defineSaveableObject();
+        static ISerializable *getInstantiated(const QJsonObject &obj);
 
         bool load(const std::string &jsonFile);
         bool save(const std::string &jsonFile) const;
@@ -33,6 +34,7 @@ class Database
         bool removeObject(ISerializable* obj);
         bool removeObject(DatabaseObject *dbObj);
         bool removeObject(const std::string &id);
+        void removeObjects(const std::vector<ISerializable*> &objs);
         void clear(bool deleteIt = true);
         bool objectExists(ISerializable* obj) const;
         bool objectExists(const std::string &id) const;
@@ -50,11 +52,11 @@ class Database
         const static size_t npos = -1;
     private:
         void instantiateDatabase(const QJsonArray &objs);
-        void instantiateObject(const QJsonObject &obj);
+        void instantiateAddObject(const QJsonObject &obj);
 
         void addObjectInternal(ISerializable* obj, const DatabaseID &id);
 
-        std::unordered_map<std::string, ISerializable*> m_saveableObjectTypes;
+        static std::unordered_map<std::string, ISerializable*> m_saveableObjectTypes;
         std::unordered_map<std::string, DatabaseObject*> m_objects;
 
 };
@@ -110,6 +112,8 @@ bool Database::defineSaveableObject()
     }
     return false;
 }
+
+
 template<typename T>
 T* Database::getObject(const std::string &id) const
 {

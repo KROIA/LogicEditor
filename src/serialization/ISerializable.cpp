@@ -10,12 +10,14 @@ ISerializable::ISerializable()
     m_id = nullptr;
     m_database = nullptr;
     m_parent = nullptr;
+    m_defaultID = DatabaseID::generateRandomID();
 }
 ISerializable::ISerializable(const ISerializable &)
 {
     m_id = nullptr;
     m_database = nullptr;
     m_parent = nullptr;
+    m_defaultID = DatabaseID::generateRandomID();
 }
 ISerializable::~ISerializable()
 {
@@ -23,14 +25,16 @@ ISerializable::~ISerializable()
         m_parent->objectGotDeleted();
 }
 
+void ISerializable::setDefaultID(const std::string &id)
+{
+    m_defaultID = id;
+}
 
 const std::string &ISerializable::getID() const
 {
-    static const std::string dummy;
     if(!m_id)
     {
-        WARNING("No ID found");
-        return dummy;
+        return m_defaultID;
     }
     return m_id->getID();
 }
@@ -67,12 +71,19 @@ QJsonObject ISerializable::save() const
         // Add the properties of this object here
         // Do not take the same keyvalues two times,
         // also not the keys of the base class
+        {DatabaseID::key_id.c_str(), getID().c_str()},
         {key_objectType.c_str(), className().c_str()},
     });
 }
-bool ISerializable::read(const QJsonObject &)
+bool ISerializable::read(const QJsonObject &reader)
 {
-    return true;
+    std::string id = reader[key_objectType.c_str()].toString("").toStdString();
+    if(id != "")
+    {
+        setDefaultID(id);
+        return true;
+    }
+    return false;
 }
 void ISerializable::postLoad()
 {
@@ -170,6 +181,8 @@ std::string ISerializable::extractClassName(const QJsonObject &data)
 void ISerializable::setParent(DatabaseID *id, DatabaseObject* dbObj, Database *db)
 {
     m_id = id;
+    if(m_id)
+        m_defaultID = m_id->getID();
     m_database = db;
     m_parent = dbObj;
     for(size_t i=0; i<m_childs.size(); ++i)

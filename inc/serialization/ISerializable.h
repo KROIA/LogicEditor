@@ -33,6 +33,12 @@ class ISerializable
         virtual ~ISerializable();
 
         /**
+         * \brief setDefaultID
+         * \details Sets the default id fot the object. This is used, when the object will not be stored in a database but needs an id
+         */
+        void setDefaultID(const std::string &id);
+
+        /**
          * \brief className
          * \details Used to save the object type (class name) to know
          *          from which object this must be instantiated from when the
@@ -290,6 +296,7 @@ class ISerializable
 
         std::vector<ISerializable*> m_childs;
 
+        std::string m_defaultID;
         DatabaseID *m_id;        //!< ptr to the parent DatabaseObjects->m_id. nullptr, if not assigned to a database
         DatabaseObject *m_parent;//!< ptr to the parent DatabaseObject. nullptr, if not assigned to a database
         Database *m_database;    //!< ptr to the parent Database. nullptr, if not assigned to a database

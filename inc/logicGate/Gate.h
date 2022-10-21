@@ -9,11 +9,14 @@
 #include "Text.h"
 #include "ISerializable.h"
 
+class BlockPin;
+
 class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerializable
 {
     Q_OBJECT
         class GateDrawable;
         friend GateDrawable;
+        friend BlockPin;
     public:
         Gate(const Gate &other);
         Gate(const std::string &name = "Gate",
@@ -28,6 +31,9 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
 
         void setCharacterSize(unsigned int size);
         unsigned int getCharacterSize() const;
+
+        virtual void setEditMode(bool enable);
+        bool isInEditMode() const;
 
         void enableAutoSize(bool enable);
         bool autoSizeEnabled() const;
@@ -61,6 +67,8 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
         bool read(const QJsonObject &reader) override;
         void postLoad() override;
 
+
+
     private slots:
        void onButtonFallingEdge();
        //void onButtonDown();
@@ -79,9 +87,7 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
 
         const std::vector<Pin*> &getInputPins() const;
         const std::vector<Pin*> &getOutputPins() const;
-    private:
-        void updateGeometry();
-        void updatePosition();
+
 
         QSFML::Components::Button *m_button;
         QSFML::Components::MouseFollower *m_mouseFollower;
@@ -89,6 +95,9 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
         QSFML::Components::Text *m_symbolicText;
         GateDrawable *m_gateDrawable;
 
+    private:
+        void updateGeometry();
+        void updatePosition();
 
         sf::Vector2f m_topLeft;
         sf::Vector2f m_origin;
@@ -98,6 +107,7 @@ class Gate : public QObject, public QSFML::Objects::CanvasObject, public ISerial
         std::vector<Pin*> m_inputs;
         std::vector<Pin*> m_outputs;
 
+        bool m_inEditMode;
         bool m_draggingIsEnabled;
         bool m_isDragging;
         bool m_autoSize;
